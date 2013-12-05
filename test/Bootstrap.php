@@ -32,6 +32,7 @@ class Bootstrap
 
         if (is_readable($vendorPath . '/autoload.php')) {
             $loader = include $vendorPath . '/autoload.php';
+
             return;
         }
 
@@ -66,6 +67,7 @@ class Bootstrap
             if ($previousDir === $dir) return false;
             $previousDir = $dir;
         }
+
         return $dir . '/' . $path;
     }
 }
