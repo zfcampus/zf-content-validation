@@ -1,0 +1,42 @@
+{
+    "name": "zfcampus/zf-content-validation",
+    "description": "ZF2 Module providing incoming content validation",
+    "type": "library",
+    "license": "BSD-3-Clause",
+    "keywords": [
+        "zf2",
+        "zend",
+        "module",
+        "validation"
+    ],
+    "homepage": "http://apigility.org/",
+    "support": {
+        "email": "apigility-users@zend.com",
+        "irc": "irc://irc.freenode.net/apigility",
+        "source": "https://github.com/zfcampus/zf-content-validation",
+        "issues": "https://github.com/zfcampus/zf-content-validation/issues"
+    },
+    "repositories": [
+        { "type": "composer", "url": "https://packages.zendframework.com" }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "php": ">=5.4.8",
+        "zendframework/zendframework": "~2.3@dev",
+        "zfcampus/zf-api-problem": ">=0.7.0@dev",
+        "zfcampus/zf-content-negotiation": ">=0.7.0@dev"
+    },
+    "require-dev": {
+        "phpunit/PHPUnit": "3.7.*"
+    },
+    "autoload": {
+        "psr-0": {
+            "ZF\\ContentValidation\\": "src/",
+            "ZFTest\\ContentValidation\\": "test/"
+        },
+        "classmap": [
+            "Module.php",
+            "test/Bootstrap.php"
+        ]
+    }
+}
