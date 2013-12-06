@@ -35,8 +35,7 @@
             "ZFTest\\ContentValidation\\": "test/"
         },
         "classmap": [
-            "Module.php",
-            "test/Bootstrap.php"
+            "Module.php"
         ]
     }
 }
