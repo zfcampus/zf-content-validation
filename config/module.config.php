@@ -1,10 +1,15 @@
 <?php
+/**
+ * @license   http://opensource.org/licenses/BSD-3-Clause BSD-3-Clause
+ * @copyright Copyright (c) 2013 Zend Technologies USA Inc. (http://www.zend.com)
+ */
+
 return [
     'input_filters' => [
-        /* 
+        /*
          * An array of service name => config pairs.
          *
-         * Service names must be unique, and will be the name by which the 
+         * Service names must be unique, and will be the name by which the
          * input filter will be retrieved. The configuration is any valid
          * configuration for an input filter, as shown in the manual:
          *
@@ -25,7 +30,7 @@ return [
          *
          * The configuration *must* include:
          *
-         * - input_filter: the name of an input filter service to use with the 
+         * - input_filter: the name of an input filter service to use with the
          *   given controller
          *
          * In the future, additional options may be added, such as the ability

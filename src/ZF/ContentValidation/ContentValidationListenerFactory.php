@@ -12,7 +12,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 class ContentValidationListenerFactory implements FactoryInterface
 {
     /**
-     * @param ServiceLocatorInterface $services 
+     * @param ServiceLocatorInterface $services
      * @return ContentValidationListener
      */
     public function createService(ServiceLocatorInterface $services)
