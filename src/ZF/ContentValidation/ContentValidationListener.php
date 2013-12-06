@@ -30,7 +30,7 @@ class ContentValidationListener implements ListenerAggregateInterface
 
     /**
      * Cache of input filter service names/instances
-     * 
+     *
      * @var array
      */
     protected $inputFilters = [];
@@ -51,8 +51,8 @@ class ContentValidationListener implements ListenerAggregateInterface
     protected $services;
 
     /**
-     * @param array $config 
-     * @param null|ServiceLocatorInterface $services 
+     * @param array $config
+     * @param null|ServiceLocatorInterface $services
      */
     public function __construct(array $config = [], ServiceLocatorInterface $services = null)
     {
@@ -62,8 +62,8 @@ class ContentValidationListener implements ListenerAggregateInterface
 
     /**
      * @see   ListenerAggregateInterface
-     * @param EventManagerInterface $events 
-     * @param int $priority 
+     * @param EventManagerInterface $events
+     * @param int $priority
      */
     public function attach(EventManagerInterface $events, $priority = 1)
     {
@@ -85,7 +85,7 @@ class ContentValidationListener implements ListenerAggregateInterface
      * - Invalid input filter service name
      * - Missing ParameterDataContainer (i.e., ContentNegotiation is not registered)
      *
-     * @param MvcEvent $e 
+     * @param MvcEvent $e
      * @return null|ApiProblemResponse
      */
     public function onRoute(MvcEvent $e)
@@ -116,7 +116,7 @@ class ContentValidationListener implements ListenerAggregateInterface
         if (! $this->hasInputFilter($inputFilterService)) {
             return new ApiProblemResponse(
                 new ApiProblem(
-                    500, 
+                    500,
                     sprintf('Listed input filter "%s" does not exist; cannot validate request', $inputFilterService)
                 )
             );
@@ -126,7 +126,7 @@ class ContentValidationListener implements ListenerAggregateInterface
         if (! $dataContainer instanceof ParameterDataContainer) {
             return new ApiProblemResponse(
                 new ApiProblem(
-                    500, 
+                    500,
                     'ZF\\ContentNegotiation module is not initialized; cannot validate request'
                 )
             );
@@ -157,6 +157,12 @@ class ContentValidationListener implements ListenerAggregateInterface
         );
     }
 
+    /**
+     * Determine if we have an input filter matching the service name
+     *
+     * @param string $inputFilterService
+     * @return bool
+     */
     protected function hasInputFilter($inputFilterService)
     {
         if (array_key_exists($inputFilterService, $this->inputFilters)) {
@@ -178,6 +184,12 @@ class ContentValidationListener implements ListenerAggregateInterface
         return true;
     }
 
+    /**
+     * Retrieve the named input filter service
+     *
+     * @param string $inputFilterService
+     * @return InputFilterInterface
+     */
     protected function getInputFilter($inputFilterService)
     {
         return $this->inputFilters[$inputFilterService];
