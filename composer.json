@@ -19,15 +19,16 @@
     "repositories": [
         { "type": "composer", "url": "https://packages.zendframework.com" }
     ],
-    "minimum-stability": "dev",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0-dev"
+        }
+    },
     "require": {
         "php": ">=5.4.8",
         "zendframework/zendframework": "~2.3@dev",
-        "zfcampus/zf-api-problem": ">=0.7.0@dev",
-        "zfcampus/zf-content-negotiation": ">=0.7.0@dev"
-    },
-    "require-dev": {
-        "phpunit/PHPUnit": "3.7.*"
+        "zfcampus/zf-api-problem": "~1.0@dev",
+        "zfcampus/zf-content-negotiation": "~1.0@dev"
     },
     "autoload": {
         "psr-0": {
