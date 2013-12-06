@@ -120,7 +120,7 @@ class ContentValidationListenerTest extends TestCase
         $services = new ServiceManager();
         $services->setService('FooValidator', new InputFilter());
         $listener = new ContentValidationListener([
-            'Foo' => 'FooValidator',
+            'Foo' => ['input_filter' => 'FooValidator'],
         ], $services);
 
         $request = new HttpRequest();
@@ -147,7 +147,7 @@ class ContentValidationListenerTest extends TestCase
     {
         $services = new ServiceManager();
         $listener = new ContentValidationListener([
-            'Foo' => 'FooValidator',
+            'Foo' => ['input_filter' => 'FooValidator'],
         ], $services);
 
         $request = new HttpRequest();
@@ -185,7 +185,7 @@ class ContentValidationListenerTest extends TestCase
             ],
         ]));
         $listener = new ContentValidationListener([
-            'Foo' => 'FooValidator',
+            'Foo' => ['input_filter' => 'FooValidator'],
         ], $services);
 
         $request = new HttpRequest();
@@ -230,7 +230,7 @@ class ContentValidationListenerTest extends TestCase
             ],
         ]));
         $listener = new ContentValidationListener([
-            'Foo' => 'FooValidator',
+            'Foo' => ['input_filter' => 'FooValidator'],
         ], $services);
 
         $request = new HttpRequest();
@@ -299,7 +299,7 @@ class ContentValidationListenerTest extends TestCase
             ],
         ]));
         $listener = new ContentValidationListener([
-            'Foo' => 'FooValidator',
+            'Foo' => ['input_filter' => 'FooValidator'],
         ], $services);
 
         $request = new HttpRequest();
@@ -344,7 +344,7 @@ class ContentValidationListenerTest extends TestCase
             ],
         ]));
         $listener = new ContentValidationListener([
-            'Foo' => 'FooValidator',
+            'Foo' => ['input_filter' => 'FooValidator'],
         ], $services);
 
         $request = new HttpRequest();
@@ -387,7 +387,7 @@ class ContentValidationListenerTest extends TestCase
             ],
         ]));
         $listener = new ContentValidationListener([
-            'Foo' => 'FooValidator',
+            'Foo' => ['input_filter' => 'FooValidator'],
         ], $services);
 
         $request = new HttpRequest();

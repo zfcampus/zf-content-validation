@@ -108,11 +108,11 @@ class ContentValidationListener implements ListenerAggregateInterface
             return;
         }
 
-        if (! array_key_exists($controllerService, $this->config)) {
+        if (! isset($this->config[$controllerService]['input_filter'])) {
             return;
         }
 
-        $inputFilterService = $this->config[$controllerService];
+        $inputFilterService = $this->config[$controllerService]['input_filter'];
         if (! $this->hasInputFilter($inputFilterService)) {
             return new ApiProblemResponse(
                 new ApiProblem(
