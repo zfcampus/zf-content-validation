@@ -11,6 +11,14 @@ return [
          * - http://zf2.readthedocs.org/en/latest/modules/zend.input-filter.intro.html
          */
     ],
+    'service_manager' => [
+        'abstract_factories' => [
+            'ZF\ContentValidation\InputFilter\InputFilterAbstractServiceFactory',
+        ],
+        'factories' => [
+            'ZF\ContentValidation\ContentValidationListener' => 'ZF\ContentValidation\ContentValidationListenerFactory',
+        ],
+    ],
     'zf-content-validation' => [
         /*
          * An array of controller service name => config pairs.
