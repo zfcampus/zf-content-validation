@@ -75,7 +75,8 @@ class ContentValidationListener implements ListenerAggregateInterface
      * Attempt to validate the incoming request
      *
      * If an input filter is associated with the matched controller service,
-     * attempt to validate the incoming request.
+     * attempt to validate the incoming request, and inject the event with the
+     * input filter, as the "ZF\ContentValidation\InputFilter" parameter.
      *
      * Uses the ContentNegotiation ParameterDataContainer to retrieve parameters
      * to validate, and returns an ApiProblemResponse when validation fails.
@@ -134,6 +135,7 @@ class ContentValidationListener implements ListenerAggregateInterface
         $data = $dataContainer->getBodyParams();
 
         $inputFilter = $this->getInputFilter($inputFilterService);
+        $e->setParam('ZF\ContentValidation\InputFilter', $inputFilter);
 
         if ($request->isPatch()) {
             try {
