@@ -206,6 +206,7 @@ class ContentValidationListenerTest extends TestCase
 
         $this->assertNull($listener->onRoute($event));
         $this->assertNull($event->getResponse());
+        return $event;
     }
 
     public function testReturnsApiProblemResponseIfContentIsInvalid()
@@ -417,5 +418,14 @@ class ContentValidationListenerTest extends TestCase
     public function testInvalidValidationGroupIs400Response($response)
     {
         $this->assertEquals(400, $response->getApiProblem()->httpStatus);
+    }
+
+    /**
+     * @depends testReturnsNothingIfContentIsValid
+     */
+    public function testInputFilterIsInjectedIntoMvcEvent($event)
+    {
+        $inputFilter = $event->getParam('ZF\ContentValidation\InputFilter');
+        $this->assertInstanceOf('Zend\InputFilter\InputFilter', $inputFilter);
     }
 }
