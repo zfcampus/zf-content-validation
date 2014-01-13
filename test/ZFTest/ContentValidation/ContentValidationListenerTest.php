@@ -140,7 +140,7 @@ class ContentValidationListenerTest extends TestCase
      */
     public function testMissingContentNegotiationDataHas500Response($response)
     {
-        $this->assertEquals(500, $response->getApiProblem()->httpStatus);
+        $this->assertEquals(500, $response->getApiProblem()->status);
     }
 
     public function testReturnsApiProblemResponseIfInputFilterServiceIsInvalid()
@@ -161,7 +161,7 @@ class ContentValidationListenerTest extends TestCase
 
         $response = $listener->onRoute($event);
         $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
-        $this->assertEquals(500, $response->getApiProblem()->httpStatus);
+        $this->assertEquals(500, $response->getApiProblem()->status);
     }
 
     public function testReturnsNothingIfContentIsValid()
@@ -260,7 +260,7 @@ class ContentValidationListenerTest extends TestCase
      */
     public function testApiProblemResponseFromInvalidContentHas422Status($response)
     {
-        $this->assertEquals(422, $response->getApiProblem()->httpStatus);
+        $this->assertEquals(422, $response->getApiProblem()->status);
     }
 
     /**
@@ -417,7 +417,7 @@ class ContentValidationListenerTest extends TestCase
      */
     public function testInvalidValidationGroupIs400Response($response)
     {
-        $this->assertEquals(400, $response->getApiProblem()->httpStatus);
+        $this->assertEquals(400, $response->getApiProblem()->status);
     }
 
     /**
