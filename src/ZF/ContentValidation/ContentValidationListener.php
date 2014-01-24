@@ -133,6 +133,9 @@ class ContentValidationListener implements ListenerAggregateInterface
             );
         }
         $data = $dataContainer->getBodyParams();
+        if (null === $data || '' === $data) {
+            $data = [];
+        }
 
         $inputFilter = $this->getInputFilter($inputFilterService);
         $e->setParam('ZF\ContentValidation\InputFilter', $inputFilter);
