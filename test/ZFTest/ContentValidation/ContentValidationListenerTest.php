@@ -428,4 +428,48 @@ class ContentValidationListenerTest extends TestCase
         $inputFilter = $event->getParam('ZF\ContentValidation\InputFilter');
         $this->assertInstanceOf('Zend\InputFilter\InputFilter', $inputFilter);
     }
+
+    /**
+     * @group zf-apigility-skeleton-43
+     */
+    public function testPassingOnlyDataNotInInputFilterShouldInvalidateRequest()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'first_name' => [
+                'name' => 'first_name',
+                'required' => true,
+                'validators' => [
+                    [
+                        'name' => 'Zend\Validator\NotEmpty',
+                        'options' => ['breakchainonfailure' => true],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services);
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = new RouteMatch(['controller' => 'Foo']);
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams([
+            'foo' => 'abc',
+            'bar' => 123,
+        ]);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($event);
+        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        return $response;
+    }
 }
