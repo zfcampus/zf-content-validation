@@ -144,8 +144,16 @@ class ContentValidationListener implements ListenerAggregateInterface
             try {
                 $inputFilter->setValidationGroup(array_keys($data));
             } catch (InputFilterInvalidArgumentException $ex) {
+                $pattern = '/expects a list of valid input names; "(?P<field>[^"]+)" was not found/';
+                $matched = preg_match($pattern, $ex->getMessage(), $matches);
+                if (!$matched) {
+                    return new ApiProblemResponse(
+                        new ApiProblem(400, $ex)
+                    );
+                }
+
                 return new ApiProblemResponse(
-                    new ApiProblem(400, 'Invalid data specified in request')
+                    new ApiProblem(422, 'Unrecognized field "' . $matches['field'] . '"')
                 );
             }
         }
