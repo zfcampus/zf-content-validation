@@ -45,7 +45,6 @@ class Module implements ValidatorProviderInterface
 	    	),
     		'initializers' => array(
     			function ($service, $sm) {
-    				die ('toto');
     				if ($service instanceof \Zend\ServiceManager\ServiceManagerAwareInterface) {
     					$service->setServiceManager($sm);
     				}
