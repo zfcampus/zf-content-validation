@@ -17,8 +17,22 @@ abstract class AbstractDb extends AbstractDbValidator implements ServiceLocatorA
 	
 	public function __construct($options = null)
 	{
-		parent::__construct($options);
-	
+		if ($options instanceof Traversable) {
+			$options = ArrayUtils::iteratorToArray($options);
+		}
+		
+		if (isset($this->messageTemplates)) {
+			$this->abstractOptions['messageTemplates'] = $this->messageTemplates;
+		}
+		
+		if (isset($this->messageVariables)) {
+			$this->abstractOptions['messageVariables'] = $this->messageVariables;
+		}
+		
+		if (is_array($options)) {
+			$this->setOptions($options);
+		}
+		
 		if ($options instanceof Select) {
 			$this->setSelect($options);
 			return;
