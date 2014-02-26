@@ -29,10 +29,6 @@ abstract class AbstractDb extends AbstractDbValidator implements ServiceLocatorA
 			$this->abstractOptions['messageVariables'] = $this->messageVariables;
 		}
 		
-		if (is_array($options)) {
-			$this->setOptions($options);
-		}
-		
 		if ($options instanceof Select) {
 			$this->setSelect($options);
 			return;
