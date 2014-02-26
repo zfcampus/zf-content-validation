@@ -7,8 +7,9 @@
 namespace ZF\ContentValidation;
 
 use Zend\Mvc\MvcEvent;
+use Zend\ModuleManager\Feature\ValidatorProviderInterface;
 
-class Module
+class Module implements ValidatorProviderInterface
 {
     public function getAutoloaderConfig()
     {
@@ -39,8 +40,8 @@ class Module
     {
     	return array(
     		'invokables' => array(
-    			'ZF\ContentValidation\Validator\Db\RecordExists' => 'ZF\ContentValidation\Validator\DbRecordExists',
-    			'ZF\ContentValidation\Validator\Db\NoRecordExists' => 'ZF\ContentValidation\Validator\DbNoRecordExists',
+    			'ZF\ContentValidation\Validator\DbRecordExists' => 'ZF\ContentValidation\Validator\Db\RecordExists',
+    			'ZF\ContentValidation\Validator\DbNoRecordExists' => 'ZF\ContentValidation\Validator\Db\NoRecordExists',
 	    	)
     	);
     }
