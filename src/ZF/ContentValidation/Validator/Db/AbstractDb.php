@@ -30,19 +30,14 @@ abstract class AbstractDb extends AbstractDbValidator implements ServiceLocatorA
 		}
 		
 		if (is_array($options)) {
-			if (array_key_exists('adapter', $options)) {
-				$tempAdapter = $options['adapter'];
-				unset($options['adapter']);
-			}
 			$this->setOptions($options);
-			$options['adapter'] = $tempAdapter;
 		}
 		
 		if ($options instanceof Select) {
 			$this->setSelect($options);
 			return;
 		}
-	
+		
 		if ($options instanceof Traversable) {
 			$options = ArrayUtils::iteratorToArray($options);
 		} elseif (func_num_args() > 1) {
@@ -53,28 +48,28 @@ abstract class AbstractDb extends AbstractDbValidator implements ServiceLocatorA
 			} else {
 				$temp['table'] = $firstArgument;
 			}
-	
+		
 			$temp['field'] = array_shift($options);
-	
+		
 			if (!empty($options)) {
 				$temp['exclude'] = array_shift($options);
 			}
-	
+		
 			if (!empty($options)) {
 				$temp['adapter'] = array_shift($options);
 			}
-	
+		
 			$options = $temp;
 		}
-	
+		
 		if (!array_key_exists('table', $options) && !array_key_exists('schema', $options)) {
 			throw new Exception\InvalidArgumentException('Table or Schema option missing!');
 		}
-	
+		
 		if (!array_key_exists('field', $options)) {
 			throw new Exception\InvalidArgumentException('Field option missing!');
 		}
-	
+		
 		if (array_key_exists('adapter', $options) && is_string($options['adapter'])) {
 			$adapter = $this->getServiceLocator()->get($options['adapter']);
 			if (!($adapter instanceof DbAdapter)) {
@@ -82,18 +77,43 @@ abstract class AbstractDb extends AbstractDbValidator implements ServiceLocatorA
 			}
 			$this->setAdapter($adapter);
 		}
-	
+		
 		if (array_key_exists('exclude', $options)) {
 			$this->setExclude($options['exclude']);
 		}
-	
+		
 		$this->setField($options['field']);
 		if (array_key_exists('table', $options)) {
 			$this->setTable($options['table']);
 		}
-	
+		
 		if (array_key_exists('schema', $options)) {
 			$this->setSchema($options['schema']);
 		}
+	}
+	
+	public function setOptions($options = array())
+	{
+		if (!is_array($options) && !$options instanceof Traversable) {
+			throw new Exception\InvalidArgumentException(__METHOD__ . ' expects an array or Traversable');
+		}
+	
+		foreach ($options as $name => $option) {
+			$fname = 'set' . ucfirst($name);
+			$fname2 = 'is' . ucfirst($name);
+			if (($name != 'setOptions') && method_exists($this, $name)) {
+				$this->{$name}($option);
+			} elseif (($fname != 'setOptions') && ($fname != 'setAdapter') && method_exists($this, $fname)) {
+				$this->{$fname}($option);
+			} elseif (method_exists($this, $fname2)) {
+				$this->{$fname2}($option);
+			} elseif (isset($this->options)) {
+				$this->options[$name] = $option;
+			} else {
+				$this->abstractOptions[$name] = $option;
+			}
+		}
+	
+		return $this;
 	}
 }
