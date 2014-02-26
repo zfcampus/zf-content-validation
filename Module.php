@@ -9,7 +9,7 @@ namespace ZF\ContentValidation;
 use Zend\Mvc\MvcEvent;
 use Zend\ModuleManager\Feature\ValidatorProviderInterface;
 
-class Module implements ValidatorProviderInterface, ValidatorProviderInterface
+class Module implements ValidatorProviderInterface
 {
     public function getAutoloaderConfig()
     {
