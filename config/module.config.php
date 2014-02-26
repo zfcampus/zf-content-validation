@@ -27,6 +27,7 @@ return [
     'validator_plugin_manager' => [
 	    'initializers' => [
 		    function ($service, $sm) {
+		    	die ('toto');
 		    	if ($service instanceof \Zend\ServiceManager\ServiceManagerAwareInterface) {
 		    		$service->setServiceManager($sm);
 		    	}
