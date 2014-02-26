@@ -24,16 +24,6 @@ return [
             'ZF\ContentValidation\ContentValidationListener' => 'ZF\ContentValidation\ContentValidationListenerFactory',
         ],
     ],
-    'validator_plugin_manager' => [
-	    'initializers' => [
-		    function ($service, $sm) {
-		    	die ('toto');
-		    	if ($service instanceof \Zend\ServiceManager\ServiceManagerAwareInterface) {
-		    		$service->setServiceManager($sm);
-		    	}
-		    }
-	    ],
-    ],
     'zf-content-validation' => [
         /*
          * An array of controller service name => config pairs.
