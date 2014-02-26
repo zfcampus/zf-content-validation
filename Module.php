@@ -34,4 +34,14 @@ class Module
 
         $events->attach($services->get('ZF\ContentValidation\ContentValidationListener'));
     }
+    
+    public function getValidatorConfig()
+    {
+    	return array(
+    		'invokables' => array(
+    			'ZF\ContentValidation\Validator\Db\RecordExists' => 'ZF\ContentValidation\Validator\DbRecordExists',
+    			'ZF\ContentValidation\Validator\Db\NoRecordExists' => 'ZF\ContentValidation\Validator\DbNoRecordExists',
+	    	)
+    	);
+    }
 }

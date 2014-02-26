@@ -71,7 +71,7 @@ abstract class AbstractDb extends AbstractDbValidator implements ServiceLocatorA
 		}
 		
 		if (array_key_exists('adapter', $options) && is_string($options['adapter'])) {
-			$adapter = $this->getServiceLocator()->get($options['adapter']);
+			$adapter = $this->getServiceLocator()->getServiceLocator()->get($options['adapter']);
 			if (!($adapter instanceof DbAdapter)) {
 				throw new Exception\InvalidArgumentException('DbAdapter service not valid!');
 			}
