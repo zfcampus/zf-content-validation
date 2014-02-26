@@ -82,7 +82,7 @@ abstract class AbstractDb extends AbstractDbValidator implements ServiceManagerA
 		}
 		
 		if (array_key_exists('adapter', $options) && is_string($options['adapter'])) {
-			$adapter = $this->getServiceManager()->geServiceManager()->get($options['adapter']);
+			$adapter = $this->getServiceManager()->get($options['adapter']);
 			if (!($adapter instanceof DbAdapter)) {
 				throw new Exception\InvalidArgumentException('DbAdapter service not valid!');
 			}
