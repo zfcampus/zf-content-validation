@@ -153,7 +153,7 @@ class ContentValidationListener implements ListenerAggregateInterface
                 }
 
                 return new ApiProblemResponse(
-                    new ApiProblem(422, 'Unrecognized field "' . $matches['field'] . '"')
+                    new ApiProblem(400, 'Unrecognized field "' . $matches['field'] . '"')
                 );
             }
         }
