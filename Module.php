@@ -45,6 +45,7 @@ class Module implements ValidatorProviderInterface
 	    	),
     		'initializers' => array(
     			function ($service, $sm) {
+    				var_dump($service);
     				if ($service instanceof \Zend\ServiceManager\ServiceManagerAwareInterface) {
     					$service->setServiceManager($sm);
     				}
