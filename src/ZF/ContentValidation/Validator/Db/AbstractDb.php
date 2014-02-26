@@ -8,12 +8,23 @@ use Zend\Db\Adapter\Adapter as DbAdapter;
 use Zend\Db\Sql\Select;
 use Zend\Stdlib\ArrayUtils;
 use Zend\Validator\Exception;
-use Zend\ServiceManager\ServiceLocatorAwareInterface;
-use Zend\ServiceManager\ServiceLocatorAwareTrait;
+use Zend\ServiceManager\ServiceManagerAwareInterface;
+use Zend\ServiceManager\ServiceManager;
 
-abstract class AbstractDb extends AbstractDbValidator implements ServiceLocatorAwareInterface
+abstract class AbstractDb extends AbstractDbValidator implements ServiceManagerAwareInterface
 {
-	use ServiceLocatorAwareTrait;
+	protected $serviceManager;
+	
+	public function getServiceManager()
+	{
+		return $this->serviceManager;
+	}
+	
+	public function setServiceManager(ServiceManager $serviceManager)
+	{
+		$this->serviceManager = $serviceManager;
+		return $this;
+	}
 	
 	public function __construct($options = null)
 	{
