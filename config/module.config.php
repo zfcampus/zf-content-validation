@@ -24,6 +24,12 @@ return [
             'ZF\ContentValidation\ContentValidationListener' => 'ZF\ContentValidation\ContentValidationListenerFactory',
         ],
     ],
+    'validators' => [
+        'factories' => [
+            'ZF\ContentValidation\Validator\DbRecordExists' => 'ZF\ContentValidation\Validator\Db\RecordExistsFactory',
+            'ZF\ContentValidation\Validator\DbNoRecordExists' => 'ZF\ContentValidation\Validator\Db\NoRecordExistsFactory',
+        ],
+    ],
     'zf-content-validation' => [
         /*
          * An array of controller service name => config pairs.
