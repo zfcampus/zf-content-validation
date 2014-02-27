@@ -10,8 +10,21 @@ use Zend\Stdlib\ArrayUtils;
 
 class NoRecordExistsFactory implements FactoryInterface, MutableCreationOptionsInterface 
 {
-    use MutableCreationOptionsTrait;
-
+	/**
+	 * @var array
+	 */
+	protected $options = [];
+	
+	/**
+	 * Set options property
+	 *
+	 * @param array $options
+	 */
+	public function setCreationOptions(array $options)
+	{
+		$this->options = $options;
+	}
+	
     public function createService(ServiceLocatorInterface $serviceLocator) 
     {
         if (isset($this->options['adapter'])) {
