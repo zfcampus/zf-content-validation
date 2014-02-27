@@ -24,6 +24,20 @@ return [
             'ZF\ContentValidation\ContentValidationListener' => 'ZF\ContentValidation\ContentValidationListenerFactory',
         ],
     ],
+    'validators' => [
+	    'invokables' => [
+    		'ZF\ContentValidation\Validator\DbRecordExists' => 'ZF\ContentValidation\Validator\Db\RecordExists',
+    		'ZF\ContentValidation\Validator\DbNoRecordExists' => 'ZF\ContentValidation\Validator\Db\NoRecordExists',
+	    ],
+	    'initializers' => [
+    		function ($service, $sm) {
+    			var_dump($service);
+    			if ($service instanceof \Zend\ServiceManager\ServiceManagerAwareInterface) {
+    				$service->setServiceManager($sm);
+    			}
+    		}
+	    ],
+	],
     'zf-content-validation' => [
         /*
          * An array of controller service name => config pairs.

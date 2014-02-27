@@ -7,9 +7,8 @@
 namespace ZF\ContentValidation;
 
 use Zend\Mvc\MvcEvent;
-use Zend\ModuleManager\Feature\ValidatorProviderInterface;
 
-class Module implements ValidatorProviderInterface
+class Module
 {
     public function getAutoloaderConfig()
     {
@@ -34,23 +33,5 @@ class Module implements ValidatorProviderInterface
         $services = $app->getServiceManager();
 
         $events->attach($services->get('ZF\ContentValidation\ContentValidationListener'));
-    }
-    
-    public function getValidatorConfig()
-    {
-    	return array(
-    		'invokables' => array(
-    			'ZF\ContentValidation\Validator\DbRecordExists' => 'ZF\ContentValidation\Validator\Db\RecordExists',
-    			'ZF\ContentValidation\Validator\DbNoRecordExists' => 'ZF\ContentValidation\Validator\Db\NoRecordExists',
-	    	),
-    		'initializers' => array(
-    			function ($service, $sm) {
-    				var_dump($service);
-    				if ($service instanceof \Zend\ServiceManager\ServiceManagerAwareInterface) {
-    					$service->setServiceManager($sm);
-    				}
-    			}
-    		),
-    	);
     }
 }
