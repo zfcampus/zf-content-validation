@@ -13,7 +13,7 @@ class NoRecordExistsFactory implements FactoryInterface, MutableCreationOptionsI
 	
 	public function createService(ServiceLocatorInterface $serviceLocator) 
 	{
-		$this->options['adapter'] = $serviceLocator->get($this->options['adapter']);
+		$this->options['adapter'] = $serviceLocator->getServiceLocator()->get($this->options['adapter']);
 		return new NoRecordExists($this->options);
 	}
 }
