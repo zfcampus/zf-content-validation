@@ -13,7 +13,8 @@ class RecordExistsFactory implements FactoryInterface, MutableCreationOptionsInt
 	
 	public function createService(ServiceLocatorInterface $serviceLocator) 
 	{
-		$this->options['adapter'] = $serviceLocator->get($this->options['adapter']);
+		//die ($this->options['adapter']);
+		$this->options['adapter'] = $serviceLocator->getServiceLocator()->get($this->options['adapter']);
 		return new RecordExists($this->options);
 	}
 }
