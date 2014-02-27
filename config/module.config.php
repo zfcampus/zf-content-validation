@@ -22,8 +22,8 @@ return [
         ],
         'factories' => [
             'ZF\ContentValidation\ContentValidationListener' => 'ZF\ContentValidation\ContentValidationListenerFactory',
-            'ZF\ContentValidation\Validator\DbRecordExists' => 'ZF\ContentValidation\RecordExistsFactory',
-            'ZF\ContentValidation\Validator\DbNoRecordExists' => 'ZF\ContentValidation\NoRecordExistsFactory',
+            'ZF\ContentValidation\Validator\DbRecordExists' => 'ZF\ContentValidation\Validator\Db\RecordExistsFactory',
+            'ZF\ContentValidation\Validator\DbNoRecordExists' => 'ZF\ContentValidation\Validator\Db\NoRecordExistsFactory',
         ],
     ],
     'zf-content-validation' => [
