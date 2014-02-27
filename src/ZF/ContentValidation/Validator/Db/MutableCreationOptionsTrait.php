@@ -9,8 +9,13 @@ trait MutableCreationOptionsTrait
 	 */
 	protected $options = [];
 	
-	public function setCreationOptions(array $options)
-	{
-		$this->options = $options;
-	}
+    /**
+     * Set options property
+     * 
+     * @param array $options
+     */
+    public function setCreationOptions(array $options)
+    {
+        $this->options = $options;
+    }
 }
