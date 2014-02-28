@@ -8,7 +8,6 @@ namespace ZF\ContentValidation;
 
 use Zend\EventManager\EventManagerInterface;
 use Zend\EventManager\ListenerAggregateInterface;
-use Zend\EventManager\ListenerAggregateTrait;
 use Zend\Http\Request as HttpRequest;
 use Zend\InputFilter\Exception\InvalidArgumentException as InputFilterInvalidArgumentException;
 use Zend\InputFilter\InputFilterInterface;
@@ -21,29 +20,32 @@ use ZF\ContentNegotiation\ParameterDataContainer;
 
 class ContentValidationListener implements ListenerAggregateInterface
 {
-    use ListenerAggregateTrait;
-
     /**
      * @var array
      */
-    protected $config = [];
+    protected $config = array();
 
     /**
      * Cache of input filter service names/instances
      *
      * @var array
      */
-    protected $inputFilters = [];
+    protected $inputFilters = array();
+
+    /**
+     * @var \Zend\Stdlib\CallbackHandler[]
+     */
+    protected $listeners = array();
 
     /**
      * @var array
      */
-    protected $methodsWithoutBodies = [
+    protected $methodsWithoutBodies = array(
         'GET',
         'HEAD',
         'OPTIONS',
         'DELETE',
-    ];
+    );
 
     /**
      * @var ServiceLocatorInterface
@@ -54,7 +56,7 @@ class ContentValidationListener implements ListenerAggregateInterface
      * @param array $config
      * @param null|ServiceLocatorInterface $services
      */
-    public function __construct(array $config = [], ServiceLocatorInterface $services = null)
+    public function __construct(array $config = array(), ServiceLocatorInterface $services = null)
     {
         $this->config   = $config;
         $this->services = $services;
@@ -69,6 +71,19 @@ class ContentValidationListener implements ListenerAggregateInterface
     {
         // trigger after authentication/authorization and content negotiation
         $this->listeners[] = $events->attach(MvcEvent::EVENT_ROUTE, array($this, 'onRoute'), -650);
+    }
+
+    /**
+     * @see   ListenerAggregateInterface
+     * @param EventManagerInterface $events 
+     */
+    public function detach(EventManagerInterface $events)
+    {
+        foreach ($this->listeners as $index => $callback) {
+            if ($events->detach($callback)) {
+                unset($this->listeners[$index]);
+            }
+        }
     }
 
     /**
@@ -134,7 +149,7 @@ class ContentValidationListener implements ListenerAggregateInterface
         }
         $data = $dataContainer->getBodyParams();
         if (null === $data || '' === $data) {
-            $data = [];
+            $data = array();
         }
 
         $inputFilter = $this->getInputFilter($inputFilterService);
@@ -164,9 +179,9 @@ class ContentValidationListener implements ListenerAggregateInterface
         }
 
         return new ApiProblemResponse(
-            new ApiProblem(422, 'Failed Validation', null, null, [
+            new ApiProblem(422, 'Failed Validation', null, null, array(
                 'validation_messages' => $inputFilter->getMessages(),
-            ])
+            ))
         );
     }
 
