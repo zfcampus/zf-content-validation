@@ -17,7 +17,7 @@ class ContentValidationListenerFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $services)
     {
-        $config = [];
+        $config = array();
         if ($services->has('Config')) {
             $allConfig = $services->get('Config');
             if (isset($allConfig['zf-content-validation'])) {
