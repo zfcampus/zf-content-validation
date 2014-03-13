@@ -75,7 +75,7 @@ class ContentValidationListener implements ListenerAggregateInterface
 
     /**
      * @see   ListenerAggregateInterface
-     * @param EventManagerInterface $events 
+     * @param EventManagerInterface $events
      */
     public function detach(EventManagerInterface $events)
     {
@@ -189,13 +189,13 @@ class ContentValidationListener implements ListenerAggregateInterface
     /**
      * Retrieve the input filter service name
      *
-     * Test first to see if we have a method-specific input filter, and 
+     * Test first to see if we have a method-specific input filter, and
      * secondarily for a general one.
      *
      * If neither are present, return boolean false.
-     * 
-     * @param  string $controllerService 
-     * @param  string $method 
+     *
+     * @param  string $controllerService
+     * @param  string $method
      * @return string|false
      */
     protected function getInputFilterService($controllerService, $method)
