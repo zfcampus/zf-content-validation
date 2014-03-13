@@ -167,7 +167,8 @@ class ContentValidationListenerTest extends TestCase
     public function testReturnsNothingIfContentIsValid()
     {
         $services = new ServiceManager();
-        $services->setService('FooValidator', new InputFilter(array(
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter(array(
             'foo' => array(
                 'name' => 'foo',
                 'validators' => array(
@@ -471,5 +472,145 @@ class ContentValidationListenerTest extends TestCase
         $response = $listener->onRoute($event);
         $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
         return $response;
+    }
+
+    public function httpMethodSpecificInputFilters()
+    {
+        return array(
+            'post-valid' => array(
+                'POST',
+                array('post' => 123),
+                true,
+                'PostValidator',
+            ),
+            'post-invalid' => array(
+                'POST',
+                array('post' => 'abc'),
+                false,
+                'PostValidator',
+            ),
+            'post-invalid-property' => array(
+                'POST',
+                array('foo' => 123),
+                false,
+                'PostValidator',
+            ),
+            'patch-valid' => array(
+                'PATCH',
+                array('patch' => 123),
+                true,
+                'PatchValidator',
+            ),
+            'patch-invalid' => array(
+                'PATCH',
+                array('patch' => 'abc'),
+                false,
+                'PatchValidator',
+            ),
+            'patch-invalid-property' => array(
+                'PATCH',
+                array('foo' => 123),
+                false,
+                'PatchValidator',
+            ),
+            'put-valid' => array(
+                'PUT',
+                array('put' => 123),
+                true,
+                'PutValidator',
+            ),
+            'put-invalid' => array(
+                'PUT',
+                array('put' => 'abc'),
+                false,
+                'PutValidator',
+            ),
+            'put-invalid-property' => array(
+                'PUT',
+                array('foo' => 123),
+                false,
+                'PutValidator',
+            ),
+        );
+    }
+
+    public function configureInputFilters($services)
+    {
+        $inputFilterFactory = new InputFilterFactory();
+        $services->setService('PostValidator', $inputFilterFactory->createInputFilter(array(
+            'post' => array(
+                'name' => 'post',
+                'required' => true,
+                'validators' => array(
+                    array('name' => 'Digits'),
+                ),
+            ),
+        )));
+
+        $services->setService('PatchValidator', $inputFilterFactory->createInputFilter(array(
+            'patch' => array(
+                'name' => 'patch',
+                'required' => true,
+                'validators' => array(
+                    array('name' => 'Digits'),
+                ),
+            ),
+        )));
+
+        $services->setService('PutValidator', $inputFilterFactory->createInputFilter(array(
+            'put' => array(
+                'name' => 'put',
+                'required' => true,
+                'validators' => array(
+                    array('name' => 'Digits'),
+                ),
+            ),
+        )));
+    }
+
+    /**
+     * @group method-specific
+     * @dataProvider httpMethodSpecificInputFilters
+     */
+    public function testCanFetchHttpMethodSpecificInputFilterWhenValidating($method, array $data, $expectedIsValid, $filterName)
+    {
+        $services = new ServiceManager();
+        $this->configureInputFilters($services);
+
+        $listener = new ContentValidationListener(array(
+            'Foo' => array(
+                'POST'  => 'PostValidator',
+                'PATCH' => 'PatchValidator',
+                'PUT'   => 'PutValidator',
+            ),
+        ), $services);
+
+        $request = new HttpRequest();
+        $request->setMethod($method);
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($data);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $result = $listener->onRoute($event);
+
+        // Ensure input filter discovered is the same one we expect
+        $inputFilter = $event->getParam('ZF\ContentValidation\InputFilter');
+        $this->assertInstanceOf('Zend\InputFilter\InputFilterInterface', $inputFilter);
+        $this->assertSame($services->get($filterName), $inputFilter);
+
+        // Ensure we have a response we expect
+        if ($expectedIsValid) {
+            $this->assertNull($result);
+            $this->assertNull($event->getResponse());
+        } else {
+            $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $result);
+        }
     }
 }

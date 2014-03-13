@@ -34,14 +34,19 @@ return array(
         /*
          * An array of controller service name => config pairs.
          *
-         * The configuration *must* include:
+         * The configuration *must* include at least *one* of:
          *
          * - input_filter: the name of an input filter service to use with the
-         *   given controller
+         *   given controller, AND/OR
          *
-         * In the future, additional options may be added, such as the ability
-         * to restrict by HTTP method, define validation groups by HTTP method,
-         * etc.
+         * - a key named after one of the HTTP methods POST, PATCH, or PUT. The
+         *   value must be the name of an input filter service to use.
+         *
+         * When determining an input filter to use, precedence will be given to
+         * any configured for specific HTTP methods, and will fall back to the
+         * "input_filter" key, when defined, otherwise. If none can be determined,
+         * the module will assume no validation is defined, and that the content
+         * provided is valid.
          */
     ),
 );
