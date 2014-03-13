@@ -75,7 +75,7 @@ class ContentValidationListener implements ListenerAggregateInterface
 
     /**
      * @see   ListenerAggregateInterface
-     * @param EventManagerInterface $events 
+     * @param EventManagerInterface $events
      */
     public function detach(EventManagerInterface $events)
     {
@@ -111,7 +111,8 @@ class ContentValidationListener implements ListenerAggregateInterface
             return;
         }
 
-        if (in_array($request->getMethod(), $this->methodsWithoutBodies)) {
+        $method = $request->getMethod();
+        if (in_array($method, $this->methodsWithoutBodies)) {
             return;
         }
 
@@ -124,11 +125,11 @@ class ContentValidationListener implements ListenerAggregateInterface
             return;
         }
 
-        if (! isset($this->config[$controllerService]['input_filter'])) {
+        $inputFilterService = $this->getInputFilterService($controllerService, $method);
+        if (! $inputFilterService) {
             return;
         }
 
-        $inputFilterService = $this->config[$controllerService]['input_filter'];
         if (! $this->hasInputFilter($inputFilterService)) {
             return new ApiProblemResponse(
                 new ApiProblem(
@@ -183,6 +184,31 @@ class ContentValidationListener implements ListenerAggregateInterface
                 'validation_messages' => $inputFilter->getMessages(),
             ))
         );
+    }
+
+    /**
+     * Retrieve the input filter service name
+     *
+     * Test first to see if we have a method-specific input filter, and
+     * secondarily for a general one.
+     *
+     * If neither are present, return boolean false.
+     *
+     * @param  string $controllerService
+     * @param  string $method
+     * @return string|false
+     */
+    protected function getInputFilterService($controllerService, $method)
+    {
+        if (isset($this->config[$controllerService][$method])) {
+            return $this->config[$controllerService][$method];
+        }
+
+        if (isset($this->config[$controllerService]['input_filter'])) {
+            return $this->config[$controllerService]['input_filter'];
+        }
+
+        return false;
     }
 
     /**
