@@ -14,9 +14,15 @@ use ZF\ContentValidation\InputFilter\InputFilterAbstractServiceFactory;
 
 class InputFilterAbstractFactoryTest extends TestCase
 {
+    /** @var ServiceManager */
+    protected $services;
+    /** @var InputFilterAbstractServiceFactory */
+    protected $factory;
+
     public function setUp()
     {
         $this->services = new ServiceManager();
+        $this->services->setService('InputFilterManager', $this->getMock('Zend\InputFilter\InputFilterPluginManager'));
         $this->factory = new InputFilterAbstractServiceFactory();
     }
 

@@ -223,18 +223,15 @@ class ContentValidationListener implements ListenerAggregateInterface
             return true;
         }
 
-        if (! $this->services
-            || ! $this->services->has($inputFilterService)
-        ) {
+        if (!$this->services || !$this->services->has($inputFilterService)) {
             return false;
         }
 
         $inputFilter = $this->services->get($inputFilterService);
-        if (! $inputFilter instanceof InputFilterInterface) {
+        if (!$inputFilter instanceof InputFilterInterface) {
             return false;
         }
 
-        $this->inputFilters[$inputFilterService] = $inputFilter;
         return true;
     }
 
@@ -246,6 +243,16 @@ class ContentValidationListener implements ListenerAggregateInterface
      */
     protected function getInputFilter($inputFilterService)
     {
+        if (!isset($this->inputFilters[$inputFilterService])) {
+            $inputFilter = $this->services->get($inputFilterService);
+            if (!$inputFilter instanceof InputFilterInterface) {
+                throw new InputFilterInvalidArgumentException(
+                    'An input filter by the name ' . $inputFilterService . ' does not exist.'
+                );
+            }
+            $this->inputFilters[$inputFilterService] = $inputFilter;
+        }
+
         return $this->inputFilters[$inputFilterService];
     }
 }

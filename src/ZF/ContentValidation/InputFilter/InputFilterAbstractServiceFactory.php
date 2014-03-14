@@ -35,7 +35,11 @@ class InputFilterAbstractServiceFactory implements AbstractFactoryInterface
         if (!isset($config['input_filters'][$rName])
             || !is_array($config['input_filters'][$rName])
         ) {
-            return false;
+            /** @var \Zend\InputFilter\InputFilterPluginManager $inputFactoryManager */
+            $inputFactoryManager = $services->get('InputFilterManager');
+            if (!$inputFactoryManager->has(array($cName, $rName))) {
+                return false;
+            }
         }
 
         return true;
@@ -50,11 +54,16 @@ class InputFilterAbstractServiceFactory implements AbstractFactoryInterface
     public function createServiceWithName(ServiceLocatorInterface $services, $cName, $rName)
     {
         $allConfig = $services->get('Config');
-        $config    = $allConfig['input_filters'][$rName];
 
-        $factory   = $this->getInputFilterFactory($services);
+        if (isset($allConfig['input_filters'][$rName])) {
+            $config = $allConfig['input_filters'][$rName];
+            $factory = $this->getInputFilterFactory($services);
+            return $factory->createInputFilter($config);
+        }
 
-        return $factory->createInputFilter($config);
+        /** @var \Zend\InputFilter\InputFilterPluginManager $inputFactoryManager */
+        $inputFactoryManager = $services->get('InputFilterManager');
+        return $inputFactoryManager->create($cName);
     }
 
     protected function getInputFilterFactory(ServiceLocatorInterface $services)
