@@ -20,20 +20,24 @@ class InputFilterAbstractServiceFactory implements AbstractFactoryInterface
     protected $factory;
 
     /**
-     * @param  ServiceLocatorInterface $services
+     * @param  ServiceLocatorInterface $inputFilters
      * @param  string                  $cName
      * @param  string                  $rName
      * @return bool
      */
-    public function canCreateServiceWithName(ServiceLocatorInterface $services, $cName, $rName)
+    public function canCreateServiceWithName(ServiceLocatorInterface $inputFilters, $cName, $rName)
     {
-        if (!$services->has('Config')) {
+        $services = $inputFilters->getServiceLocator();
+        if (! $services instanceof ServiceLocatorInterface 
+            || ! $services->has('config-input_filter_specs')
+        ) {
             return false;
         }
 
-        $config = $services->get('Config');
-        if (!isset($config['input_filters'][$rName])
-            || !is_array($config['input_filters'][$rName])
+        $config = $services->get('config-input_filter_specs');
+        $config = $config['input_filter_specs'];
+        if (!isset($config[$rName])
+            || !is_array($config[$rName])
         ) {
             return false;
         }
@@ -42,21 +46,26 @@ class InputFilterAbstractServiceFactory implements AbstractFactoryInterface
     }
 
     /**
-     * @param  ServiceLocatorInterface                $services
+     * @param  ServiceLocatorInterface                $inputFilters
      * @param  string                                 $cName
      * @param  string                                 $rName
      * @return \Zend\InputFilter\InputFilterInterface
      */
-    public function createServiceWithName(ServiceLocatorInterface $services, $cName, $rName)
+    public function createServiceWithName(ServiceLocatorInterface $inputFilters, $cName, $rName)
     {
-        $allConfig = $services->get('Config');
-        $config    = $allConfig['input_filters'][$rName];
+        $services  = $inputFilters->getServiceLocator();
+        $allConfig = $services->get('config-input_filter_specs');
+        $config    = $allConfig['input_filter_specs'][$rName];
 
         $factory   = $this->getInputFilterFactory($services);
 
         return $factory->createInputFilter($config);
     }
 
+    /**
+     * @param ServiceLocatorInterface $services 
+     * @return Factory
+     */
     protected function getInputFilterFactory(ServiceLocatorInterface $services)
     {
         if ($this->factory instanceof Factory) {
@@ -74,6 +83,10 @@ class InputFilterAbstractServiceFactory implements AbstractFactoryInterface
         return $this->factory;
     }
 
+    /**
+     * @param ServiceLocatorInterface $services 
+     * @return \Zend\ServiceManager\AbstractPluginManager
+     */
     protected function getFilterPluginManager(ServiceLocatorInterface $services)
     {
         if ($services->has('FilterManager')) {
@@ -83,6 +96,10 @@ class InputFilterAbstractServiceFactory implements AbstractFactoryInterface
         return new FilterPluginManager();
     }
 
+    /**
+     * @param ServiceLocatorInterface $services 
+     * @return \Zend\ServiceManager\AbstractPluginManager
+     */
     protected function getValidatorPluginManager(ServiceLocatorInterface $services)
     {
         if ($services->has('ValidatorManager')) {
