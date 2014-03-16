@@ -5,7 +5,7 @@
  */
 
 return array(
-    'input_filters' => array(
+    'input_filter_specs' => array(
         /*
          * An array of service name => config pairs.
          *
@@ -16,10 +16,12 @@ return array(
          * - http://zf2.readthedocs.org/en/latest/modules/zend.input-filter.intro.html
          */
     ),
-    'service_manager' => array(
+    'input_filters' => array(
         'abstract_factories' => array(
             'ZF\ContentValidation\InputFilter\InputFilterAbstractServiceFactory',
         ),
+    ),
+    'service_manager' => array(
         'factories' => array(
             'ZF\ContentValidation\ContentValidationListener' => 'ZF\ContentValidation\ContentValidationListenerFactory',
         ),

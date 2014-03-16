@@ -7,7 +7,9 @@
 namespace ZFTest\ContentValidation\InputFilter;
 
 use PHPUnit_Framework_TestCase as TestCase;
+use Zend\Config\AbstractConfigFactory;
 use Zend\Filter\FilterPluginManager;
+use Zend\InputFilter\InputFilterPluginManager;
 use Zend\ServiceManager\ServiceManager;
 use Zend\Validator\ValidatorPluginManager;
 use ZF\ContentValidation\InputFilter\InputFilterAbstractServiceFactory;
@@ -17,46 +19,51 @@ class InputFilterAbstractFactoryTest extends TestCase
     public function setUp()
     {
         $this->services = new ServiceManager();
+        $this->filters  = new InputFilterPluginManager();
+        $this->filters->setServiceLocator($this->services);
+        $this->services->setService('InputFilterManager', $this->filters);
+        $this->services->addAbstractFactory(new AbstractConfigFactory());
+
         $this->factory = new InputFilterAbstractServiceFactory();
     }
 
     public function testCannotCreateServiceIfNoConfigServicePresent()
     {
-        $this->assertFalse($this->factory->canCreateServiceWithName($this->services, 'filter', 'filter'));
+        $this->assertFalse($this->factory->canCreateServiceWithName($this->filters, 'filter', 'filter'));
     }
 
     public function testCannotCreateServiceIfConfigServiceDoesNotHaveInputFiltersConfiguration()
     {
         $this->services->setService('Config', array());
-        $this->assertFalse($this->factory->canCreateServiceWithName($this->services, 'filter', 'filter'));
+        $this->assertFalse($this->factory->canCreateServiceWithName($this->filters, 'filter', 'filter'));
     }
 
     public function testCannotCreateServiceIfConfigInputFiltersDoesNotContainMatchingServiceName()
     {
         $this->services->setService('Config', array(
-            'input_filters' => array(),
+            'input_filter_specs' => array(),
         ));
-        $this->assertFalse($this->factory->canCreateServiceWithName($this->services, 'filter', 'filter'));
+        $this->assertFalse($this->factory->canCreateServiceWithName($this->filters, 'filter', 'filter'));
     }
 
     public function testCanCreateServiceIfConfigInputFiltersContainsMatchingServiceName()
     {
         $this->services->setService('Config', array(
-            'input_filters' => array(
+            'input_filter_specs' => array(
                 'filter' => array(),
             ),
         ));
-        $this->assertTrue($this->factory->canCreateServiceWithName($this->services, 'filter', 'filter'));
+        $this->assertTrue($this->factory->canCreateServiceWithName($this->filters, 'filter', 'filter'));
     }
 
     public function testCreatesInputFilterInstance()
     {
         $this->services->setService('Config', array(
-            'input_filters' => array(
+            'input_filter_specs' => array(
                 'filter' => array(),
             ),
         ));
-        $filter = $this->factory->createServiceWithName($this->services, 'filter', 'filter');
+        $filter = $this->factory->createServiceWithName($this->filters, 'filter', 'filter');
         $this->assertInstanceOf('Zend\InputFilter\InputFilterInterface', $filter);
     }
 
@@ -76,7 +83,7 @@ class InputFilterAbstractFactoryTest extends TestCase
         $this->services->setService('FilterManager', $filters);
         $this->services->setService('ValidatorManager', $validators);
         $this->services->setService('Config', array(
-            'input_filters' => array(
+            'input_filter_specs' => array(
                 'filter' => array(
                     'input' => array(
                         'name' => 'input',
@@ -92,7 +99,7 @@ class InputFilterAbstractFactoryTest extends TestCase
             ),
         ));
 
-        $inputFilter = $this->factory->createServiceWithName($this->services, 'filter', 'filter');
+        $inputFilter = $this->factory->createServiceWithName($this->filters, 'filter', 'filter');
         $this->assertTrue($inputFilter->has('input'));
 
         $input = $inputFilter->get('input');

@@ -24,6 +24,6 @@ class ContentValidationListenerFactory implements FactoryInterface
                 $config = $allConfig['zf-content-validation'];
             }
         }
-        return new ContentValidationListener($config, $services);
+        return new ContentValidationListener($config, $services->get('InputFilterManager'));
     }
 }
