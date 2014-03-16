@@ -26,6 +26,11 @@ class ContentValidationListener implements ListenerAggregateInterface
     protected $config = array();
 
     /**
+     * @var ServiceLocatorInterface
+     */
+    protected $inputFilterManager;
+
+    /**
      * Cache of input filter service names/instances
      *
      * @var array
@@ -48,18 +53,13 @@ class ContentValidationListener implements ListenerAggregateInterface
     );
 
     /**
-     * @var ServiceLocatorInterface
-     */
-    protected $services;
-
-    /**
      * @param array $config
-     * @param null|ServiceLocatorInterface $services
+     * @param null|ServiceLocatorInterface $inputFilterManager
      */
-    public function __construct(array $config = array(), ServiceLocatorInterface $services = null)
+    public function __construct(array $config = array(), ServiceLocatorInterface $inputFilterManager = null)
     {
-        $this->config   = $config;
-        $this->services = $services;
+        $this->config             = $config;
+        $this->inputFilterManager = $inputFilterManager;
     }
 
     /**
@@ -223,13 +223,13 @@ class ContentValidationListener implements ListenerAggregateInterface
             return true;
         }
 
-        if (! $this->services
-            || ! $this->services->has($inputFilterService)
+        if (! $this->inputFilterManager
+            || ! $this->inputFilterManager->has($inputFilterService)
         ) {
             return false;
         }
 
-        $inputFilter = $this->services->get($inputFilterService);
+        $inputFilter = $this->inputFilterManager->get($inputFilterService);
         if (! $inputFilter instanceof InputFilterInterface) {
             return false;
         }
