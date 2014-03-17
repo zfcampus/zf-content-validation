@@ -7,7 +7,6 @@
 namespace ZFTest\ContentValidation\InputFilter;
 
 use PHPUnit_Framework_TestCase as TestCase;
-use Zend\Config\AbstractConfigFactory;
 use Zend\Filter\FilterPluginManager;
 use Zend\InputFilter\InputFilterPluginManager;
 use Zend\ServiceManager\ServiceManager;
@@ -22,7 +21,6 @@ class InputFilterAbstractFactoryTest extends TestCase
         $this->filters  = new InputFilterPluginManager();
         $this->filters->setServiceLocator($this->services);
         $this->services->setService('InputFilterManager', $this->filters);
-        $this->services->addAbstractFactory(new AbstractConfigFactory());
 
         $this->factory = new InputFilterAbstractServiceFactory();
     }
