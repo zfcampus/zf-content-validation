@@ -50,8 +50,8 @@ class Bootstrap
                 'Zend\Loader\StandardAutoloader' => array(
                     'autoregister_zf' => true,
                     'namespaces' => array(
-                        'ZF\ContentValidation' => __DIR__ . '/../src/ZF/ContentValidation/',
-                        __NAMESPACE__ => __DIR__ . '/ZFTest/ContentValidation/',
+                        'ZF\ContentValidation' => __DIR__ . '/../src/',
+                        __NAMESPACE__ => __DIR__,
                     ),
                 ),
             ));
