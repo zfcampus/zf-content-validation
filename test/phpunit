@@ -1,5 +1,0 @@
-#!/bin/sh
-SCRIPT=$(readlink -f $0)
-TESTSPATH=$(dirname $SCRIPT)
-
-/usr/bin/env php ${TESTSPATH}/../vendor/bin/phpunit "$@"
