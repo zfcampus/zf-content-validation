@@ -6,15 +6,13 @@ ZF Content Validation
 Introduction
 ------------
 
-Module for automating validation of incoming input within a Zend Framework 2
-application.
+ZF2 Module for automating validation of incoming input.
 
 Allows the following:
 
-- Defining named input filters
-- Mapping named input filters to named controller services
-- Returning an `ApiProblemResponse` with validation error messages on invalid
-  input
+- Defining named input filters.
+- Mapping named input filters to named controller services.
+- Returning an `ApiProblemResponse` with validation error messages on invalid input.
 
 Installation
 ------------
@@ -49,7 +47,6 @@ return array(
 );
 ```
 
-
 Configuration
 =============
 
@@ -60,43 +57,46 @@ This module utilizes two user level configuration keys `zf-content-validation` a
 
 #### Service Name key
 
-The `zf-content-validation` key is a mapping between controller service names as the key and
-the value being an array of mappings that determine which HTTP method to respond to and what
-input filter to map to for the given request.  The keys for the mapping can either be an
-HTTP method (like `POST`, `GET`, etc.) or it can be the word `input_filter`, in which case this
-particular mapping will be used for all HTTP methods for the matching controller service name
-request.
+The `zf-content-validation` key is a mapping between controller service names as the key, and the
+value being an array of mappings that determine which HTTP method to respond to and what input
+filter to map to for the given request.  The keys for the mapping can either be an HTTP method that
+accepts a request body (i.e., `POST`, `PUT`, `PATCH`, or `DELETE`), or it can be the word
+`input_filter`. The value assigned for the `input_filter` key will be used in the case that no input
+filter is configured for the current HTTP request method.
 
 Example where there is a default as well as a GET filter:
 
 ```php
 'zf-content-validation' => array(
-    'Application\\Controller\\HelloWorld' => array(
-        'input_filter' => 'Application\\Controller\\HelloWorld\\Validator',
-        'GET' => 'Application\\Controller\\HelloWorldGet'
+    'Application\Controller\HelloWorld' => array(
+        'input_filter' => 'Application\Controller\HelloWorld\Validator',
+        'POST' => 'Application\Controller\HelloWorld\CreationValidator',
     ),
 ),
 ```
 
+In the above example, the `Application\Controller\HelloWorld\Validator` service will be selected for
+`PATCH`, `PUT`, or `DELETE` requests, while the `Application\Controller\HelloWorld\CreationValidator`will be selected for `POST` requests.
+
 #### `input_filter_spec`
 
-`input_filter_spec` if for configuration driven creation of input filters.  They keys for
-this array of configurations will be a unique name, but more often based off the service
-name it is generally mapped to.  The values will be a typical input filter configuration
-array, like the one from the ZF2 manual
-[http://zf2.readthedocs.org/en/latest/modules/zend.input-filter.intro.html](http://zf2.readthedocs.org/en/latest/modules/zend.input-filter.intro.html).
+`input_filter_spec` is for configuration-driven creation of input filters.  The keys for this array
+will be a unique name, but more often based off the service name it is mapped to under the
+`zf-content-validation` key.  The values will be an input filter configuration array, as is
+described in the ZF2 manual [section on input
+filters](http://zf2.readthedocs.org/en/latest/modules/zend.input-filter.intro.html).
 
 Example:
 
 ```php
 'input_filter_specs' => array(
-    'Application\\Controller\\HelloWorldGet' => array(
+    'Application\Controller\HelloWorldGet' => array(
         0 => array(
             'name' => 'name',
             'required' => true,
             'filters' => array(
                 0 => array(
-                    'name' => 'Zend\\Filter\\StringTrim',
+                    'name' => 'Zend\Filter\StringTrim',
                     'options' => array(),
                 ),
             ),
@@ -109,6 +109,8 @@ Example:
 ```
 
 ### System Configuration
+
+The following configuration is defined by the module in order to function within a ZF2 application.
 
 ```php
 'input_filters' => array(
@@ -136,13 +138,13 @@ ZF2 Events
 
 #### `ZF\ContentValidation\ContentValidationListener`
 
-This listener is attached to the `MvcEvent::EVENT_ROUTE` at priority `-650`.  It's primary purpose is
-utilize the configuration in order to determine if the current request's controller service name
-to be dispatched has a configured input filter.  If it does, it will travers the mappings from the
-configuration file to create the appropriate input filter (from configuration or the input filter
-plugin manager) in order to validate the incoming data.  This particular listener utilizes the data
-from the `zf-content-negotiation` data container in order to get the deserialized content body
-parameters.
+This listener is attached to the `MvcEvent::EVENT_ROUTE` event at priority `-650`.  Its purpose is
+to utilize the `zf-content-validation` configuration in order to determine if the current request's
+selected controller service name has a configured input filter.  If it does, it will traverse the
+mappings from the configuration file to create the appropriate input filter (from configuration or
+the Zend Framework 2 input filter plugin manager) in order to validate the incoming data.  This
+particular listener utilizes the data from the `zf-content-negotiation` data container in order to
+get the deserialized content body parameters.
 
 ZF2 Services
 ============
@@ -152,5 +154,5 @@ ZF2 Services
 #### `ZF\ContentValidation\InputFilter\InputFilterAbstractServiceFactory`
 
 This abstract factory is responsible for creating and returning an appropriate input filter given
-a name and the configuration from the top-level key `input_filter_specs`.
-
+a name and the configuration from the top-level key `input_filter_specs`. It is registered with
+`Zend\InputFilter\InputFilterPluginManager`.
