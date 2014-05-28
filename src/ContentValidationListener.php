@@ -153,6 +153,11 @@ class ContentValidationListener implements ListenerAggregateInterface
             $data = array();
         }
 
+        $files = $request->getFiles();
+        if (0 < count($files)) {
+            $data = array_merge_recursive($data, $files->toArray());
+        }
+
         $inputFilter = $this->getInputFilter($inputFilterService);
         $e->setParam('ZF\ContentValidation\InputFilter', $inputFilter);
 
