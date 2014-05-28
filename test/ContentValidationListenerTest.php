@@ -14,6 +14,7 @@ use Zend\InputFilter\InputFilter;
 use Zend\Mvc\MvcEvent;
 use Zend\Mvc\Router\RouteMatch;
 use Zend\ServiceManager\ServiceManager;
+use Zend\Stdlib\Parameters;
 use Zend\Stdlib\Request as StdlibRequest;
 use ZF\ContentNegotiation\ParameterDataContainer;
 use ZF\ContentValidation\ContentValidationListener;
@@ -612,5 +613,56 @@ class ContentValidationListenerTest extends TestCase
         } else {
             $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $result);
         }
+    }
+
+    public function testMergesFilesArrayIntoDataPriorToValidationWhenFilesArrayIsPopulated()
+    {
+        $validator = $this->getMock('Zend\InputFilter\InputFilterInterface');
+        $services = new ServiceManager();
+        $services->setService('FooValidator', $validator);
+
+        $listener = new ContentValidationListener(array(
+            'Foo' => array('input_filter' => 'FooValidator'),
+        ), $services);
+
+        $files = new Parameters(array(
+            'foo' => array(
+                'name' => 'foo.txt',
+                'type' => 'text/plain',
+                'size' => 1,
+                'tmp_name' => '/tmp/foo.txt',
+                'error' => UPLOAD_ERR_OK,
+            ),
+        ));
+        $data = array(
+            'bar' => 'baz',
+            'quz' => 'quuz',
+        );
+        $dataContainer = new ParameterDataContainer();
+        $dataContainer->setBodyParams($data);
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+        $request->setFiles($files);
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataContainer);
+
+        $validator->expects($this->any())
+            ->method('has')
+            ->with($this->equalTo('FooValidator'))
+            ->will($this->returnValue(true));
+        $validator->expects($this->once())
+            ->method('setData')
+            ->with($this->equalTo(array_merge_recursive($data, $files->toArray())));
+        $validator->expects($this->once())
+            ->method('isValid')
+            ->will($this->returnValue(true));
+
+        $this->assertNull($listener->onRoute($event));
     }
 }
