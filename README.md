@@ -14,6 +14,11 @@ Allows the following:
 - Mapping named input filters to named controller services.
 - Returning an `ApiProblemResponse` with validation error messages on invalid input.
 
+Requirements
+------------
+  
+Please see the [composer.json](composer.json) file.
+
 Installation
 ------------
 
