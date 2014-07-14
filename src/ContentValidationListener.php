@@ -15,6 +15,7 @@ use Zend\InputFilter\InputFilterInterface;
 use Zend\Mvc\MvcEvent;
 use Zend\Mvc\Router\RouteMatch;
 use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\Stdlib\ArrayUtils;
 use ZF\ApiProblem\ApiProblem;
 use ZF\ApiProblem\ApiProblemResponse;
 use ZF\ContentNegotiation\ParameterDataContainer;
@@ -164,7 +165,7 @@ class ContentValidationListener implements ListenerAggregateInterface
             $data = array();
         }
 
-        $isCollection = $this->isCollection($controllerService, $routeMatches, $request);
+        $isCollection = $this->isCollection($controllerService, $data, $routeMatches, $request);
 
         $files = $request->getFiles();
         if (! $isCollection && 0 < count($files)) {
@@ -285,13 +286,18 @@ class ContentValidationListener implements ListenerAggregateInterface
      * Does the request represent a collection?
      *
      * @param string $serviceName
+     * @param array $data
      * @param RouteMatch $matches
      * @param HttpRequest $request
      * @return bool
      */
-    protected function isCollection($serviceName, RouteMatch $matches, HttpRequest $request)
+    protected function isCollection($serviceName, $data, RouteMatch $matches, HttpRequest $request)
     {
         if (! array_key_exists($serviceName, $this->restControllers)) {
+            return false;
+        }
+
+        if ($request->isPost() && ArrayUtils::isHashTable($data)) {
             return false;
         }
 

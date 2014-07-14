@@ -14,8 +14,8 @@ class PatchCollectionInputFilter extends CollectionInputFilter
 {
     /**
      * Overriding due to visibility of $data
-     * 
-     * @param mixed $data 
+     *
+     * @param mixed $data
      */
     public function setData($data)
     {

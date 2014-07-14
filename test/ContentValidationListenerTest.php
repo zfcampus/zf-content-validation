@@ -832,4 +832,214 @@ class ContentValidationListenerTest extends TestCase
         $response = $listener->onRoute($event);
         $this->assertNull($response);
     }
+
+    /**
+     * @group 3
+     */
+    public function testCanValidatePostedCollections()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter(array(
+            'foo' => array(
+                'name' => 'foo',
+                'validators' => array(
+                    array('name' => 'Digits'),
+                ),
+            ),
+            'bar' => array(
+                'name' => 'bar',
+                'validators' => array(
+                    array(
+                        'name'    => 'Regex',
+                        'options' => array('pattern' => '/^[a-z]+/i'),
+                    ),
+                ),
+            ),
+        )));
+        $listener = new ContentValidationListener(array(
+            'Foo' => array('input_filter' => 'FooValidator'),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array_fill(0, 10, array(
+            'foo' => 123,
+            'bar' => 'abc',
+        ));
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($event);
+        $this->assertNull($response);
+    }
+
+    /**
+     * @group 3
+     */
+    public function testReportsValidationFailureForPostedCollection()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter(array(
+            'foo' => array(
+                'name' => 'foo',
+                'validators' => array(
+                    array('name' => 'Digits'),
+                ),
+            ),
+            'bar' => array(
+                'name' => 'bar',
+                'validators' => array(
+                    array(
+                        'name'    => 'Regex',
+                        'options' => array('pattern' => '/^[a-z]+/i'),
+                    ),
+                ),
+            ),
+        )));
+        $listener = new ContentValidationListener(array(
+            'Foo' => array('input_filter' => 'FooValidator'),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array_fill(0, 10, array(
+            'foo' => 'abc',
+            'bar' => 123,
+        ));
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($event);
+        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        $this->assertEquals(422, $response->getApiProblem()->status);
+    }
+
+    /**
+     * @group 3
+     */
+    public function testValidatesPostedEntityWhenCollectionIsPossibleForService()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter(array(
+            'foo' => array(
+                'name' => 'foo',
+                'validators' => array(
+                    array('name' => 'Digits'),
+                ),
+            ),
+            'bar' => array(
+                'name' => 'bar',
+                'validators' => array(
+                    array(
+                        'name'    => 'Regex',
+                        'options' => array('pattern' => '/^[a-z]+/i'),
+                    ),
+                ),
+            ),
+        )));
+        $listener = new ContentValidationListener(array(
+            'Foo' => array('input_filter' => 'FooValidator'),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array(
+            'foo' => 123,
+            'bar' => 'abc',
+        );
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($event);
+        $this->assertNull($response);
+    }
+
+    /**
+     * @group 3
+     */
+    public function testIndicatesInvalidPostedEntityWhenCollectionIsPossibleForService()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter(array(
+            'foo' => array(
+                'name' => 'foo',
+                'validators' => array(
+                    array('name' => 'Digits'),
+                ),
+            ),
+            'bar' => array(
+                'name' => 'bar',
+                'validators' => array(
+                    array(
+                        'name'    => 'Regex',
+                        'options' => array('pattern' => '/^[a-z]+/i'),
+                    ),
+                ),
+            ),
+        )));
+        $listener = new ContentValidationListener(array(
+            'Foo' => array('input_filter' => 'FooValidator'),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array(
+            'foo' => 'abc',
+            'bar' => 123,
+        );
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($event);
+        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        $this->assertEquals(422, $response->getApiProblem()->status);
+    }
 }
