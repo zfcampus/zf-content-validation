@@ -9,6 +9,7 @@ namespace ZF\ContentValidation;
 use Zend\EventManager\EventManagerInterface;
 use Zend\EventManager\ListenerAggregateInterface;
 use Zend\Http\Request as HttpRequest;
+use Zend\InputFilter\CollectionInputFilter;
 use Zend\InputFilter\Exception\InvalidArgumentException as InputFilterInvalidArgumentException;
 use Zend\InputFilter\InputFilterInterface;
 use Zend\Mvc\MvcEvent;
@@ -53,13 +54,23 @@ class ContentValidationListener implements ListenerAggregateInterface
     );
 
     /**
+     * Map of REST controllers => route identifier names
+     *
+     * Used to determine if we have a collection or an entity, for purposes of validation.
+     *
+     * @var array
+     */
+    protected $restControllers;
+
+    /**
      * @param array $config
      * @param null|ServiceLocatorInterface $inputFilterManager
      */
-    public function __construct(array $config = array(), ServiceLocatorInterface $inputFilterManager = null)
+    public function __construct(array $config = array(), ServiceLocatorInterface $inputFilterManager = null, array $restControllers = array())
     {
         $this->config             = $config;
         $this->inputFilterManager = $inputFilterManager;
+        $this->restControllers    = $restControllers;
     }
 
     /**
@@ -153,15 +164,30 @@ class ContentValidationListener implements ListenerAggregateInterface
             $data = array();
         }
 
+        $isCollection = $this->isCollection($controllerService, $routeMatches, $request);
+
         $files = $request->getFiles();
-        if (0 < count($files)) {
+        if (! $isCollection && 0 < count($files)) {
+            // File uploads are not validated for collections; impossible to
+            // match file fields to discrete sets
             $data = array_merge_recursive($data, $files->toArray());
         }
 
         $inputFilter = $this->getInputFilter($inputFilterService);
+
+        if ($isCollection) {
+            $collectionInputFilter = new CollectionInputFilter();
+            $collectionInputFilter->setInputFilter($inputFilter);
+            $inputFilter = $collectionInputFilter;
+        }
+
         $e->setParam('ZF\ContentValidation\InputFilter', $inputFilter);
 
-        if ($request->isPatch()) {
+        // We cannot create validation groups when validating collections, as
+        // the values submitted may vary between each entity in the collection.
+        // If you need to loosen restrictions, create a PATCH-specific input
+        // filter.
+        if (! $isCollection && $request->isPatch()) {
             try {
                 $inputFilter->setValidationGroup(array_keys($data));
             } catch (InputFilterInvalidArgumentException $ex) {
@@ -252,5 +278,27 @@ class ContentValidationListener implements ListenerAggregateInterface
     protected function getInputFilter($inputFilterService)
     {
         return $this->inputFilters[$inputFilterService];
+    }
+
+    /**
+     * Does the request represent a collection?
+     *
+     * @param string $serviceName
+     * @param RouteMatch $matches
+     * @param HttpRequest $request
+     * @return bool
+     */
+    protected function isCollection($serviceName, RouteMatch $matches, HttpRequest $request)
+    {
+        if (! array_key_exists($serviceName, $this->restControllers)) {
+            return false;
+        }
+
+        $identifierName = $this->restControllers[$serviceName];
+        if ($matches->getParam($identifierName)) {
+            return true;
+        }
+
+        return (null === $request->getQuery($identifierName, null));
     }
 }
