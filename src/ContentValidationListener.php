@@ -176,7 +176,8 @@ class ContentValidationListener implements ListenerAggregateInterface
         $inputFilter = $this->getInputFilter($inputFilterService);
 
         if ($isCollection) {
-            $collectionInputFilter = new CollectionInputFilter();
+            $inputFilterClass = $request->isPatch() ? __NAMESPACE__ . '\InputFilter\PatchCollectionInputFilter' : 'Zend\InputFilter\CollectionInputFilter';
+            $collectionInputFilter = new $inputFilterClass();
             $collectionInputFilter->setInputFilter($inputFilter);
             $inputFilter = $collectionInputFilter;
         }

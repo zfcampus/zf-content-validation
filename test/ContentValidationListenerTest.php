@@ -734,7 +734,7 @@ class ContentValidationListenerTest extends TestCase
      * @group 3
      * @dataProvider listMethods
      */
-    public function testReturnsApiProblemResponseForCollectionIfParametersAreMissing($method)
+    public function testReturnsApiProblemResponseForCollectionIfAnyFieldsAreInvalid($method)
     {
         $services = new ServiceManager();
         $factory  = new InputFilterFactory();
@@ -767,7 +767,7 @@ class ContentValidationListenerTest extends TestCase
         $matches = new RouteMatch(array('controller' => 'Foo'));
 
         $params = array_fill(0, 10, array(
-            'foo' => 123,
+            'foo' => '123a',
         ));
 
         $dataParams = new ParameterDataContainer();
@@ -780,6 +780,56 @@ class ContentValidationListenerTest extends TestCase
 
         $response = $listener->onRoute($event);
         $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
-        return $response;
+    }
+
+    /**
+     * @group 3
+     */
+    public function testValidatesPatchToCollectionWhenFieldMissing()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter(array(
+            'foo' => array(
+                'name' => 'foo',
+                'validators' => array(
+                    array('name' => 'Digits'),
+                ),
+            ),
+            'bar' => array(
+                'name' => 'bar',
+                'validators' => array(
+                    array(
+                        'name'    => 'Regex',
+                        'options' => array('pattern' => '/^[a-z]+/i'),
+                    ),
+                ),
+            ),
+        )));
+        $listener = new ContentValidationListener(array(
+            'Foo' => array('input_filter' => 'FooValidator'),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $request = new HttpRequest();
+        $request->setMethod('PATCH');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array_fill(0, 10, array(
+            'foo' => 123,
+        ));
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($event);
+        $this->assertNull($response);
     }
 }
