@@ -17,19 +17,19 @@ class ContentValidationListenerFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $services)
     {
-        $config       = array();
-        $restServices = array();
+        $contentValidationConfig = array();
+        $restServices            = array();
 
         if ($services->has('Config')) {
-            $allConfig = $services->get('Config');
-            if (isset($allConfig['zf-content-validation'])) {
-                $config = $allConfig['zf-content-validation'];
+            $config = $services->get('Config');
+            if (isset($config['zf-content-validation'])) {
+                $contentValidationConfig = $config['zf-content-validation'];
             }
-            $restServices = $this->getRestServicesFromConfig($allConfig);
+            $restServices = $this->getRestServicesFromConfig($config);
         }
 
         return new ContentValidationListener(
-            $config,
+            $contentValidationConfig,
             $services->get('InputFilterManager'),
             $restServices
         );
