@@ -17,13 +17,47 @@ class ContentValidationListenerFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $services)
     {
-        $config = array();
+        $contentValidationConfig = array();
+        $restServices            = array();
+
         if ($services->has('Config')) {
-            $allConfig = $services->get('Config');
-            if (isset($allConfig['zf-content-validation'])) {
-                $config = $allConfig['zf-content-validation'];
+            $config = $services->get('Config');
+            if (isset($config['zf-content-validation'])) {
+                $contentValidationConfig = $config['zf-content-validation'];
             }
+            $restServices = $this->getRestServicesFromConfig($config);
         }
-        return new ContentValidationListener($config, $services->get('InputFilterManager'));
+
+        return new ContentValidationListener(
+            $contentValidationConfig,
+            $services->get('InputFilterManager'),
+            $restServices
+        );
+    }
+
+    /**
+     * Generate the list of REST services for the listener
+     *
+     * Looks for zf-rest configuration, and creates a list of controller
+     * service / identifier name pairs to pass to the listener.
+     *
+     * @param array $config
+     * @return array
+     */
+    protected function getRestServicesFromConfig(array $config)
+    {
+        $restServices = array();
+        if (!isset($config['zf-rest'])) {
+            return $restServices;
+        }
+
+        foreach ($config['zf-rest'] as $controllerService => $restConfig) {
+            if (!isset($restConfig['route_identifier_name'])) {
+                continue;
+            }
+            $restServices[$controllerService] = $restConfig['route_identifier_name'];
+        }
+
+        return $restServices;
     }
 }
