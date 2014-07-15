@@ -25,7 +25,7 @@ class ContentValidationListenerFactory implements FactoryInterface
             if (isset($allConfig['zf-content-validation'])) {
                 $config = $allConfig['zf-content-validation'];
             }
-            $restServices = $this->getRestServicesFromConfig($config);
+            $restServices = $this->getRestServicesFromConfig($allConfig);
         }
 
         return new ContentValidationListener(
