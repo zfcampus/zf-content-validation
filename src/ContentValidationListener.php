@@ -303,7 +303,7 @@ class ContentValidationListener implements ListenerAggregateInterface
 
         $identifierName = $this->restControllers[$serviceName];
         if ($matches->getParam($identifierName)) {
-            return true;
+            return false;
         }
 
         return (null === $request->getQuery($identifierName, null));
