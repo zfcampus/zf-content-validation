@@ -1042,4 +1042,63 @@ class ContentValidationListenerTest extends TestCase
         $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
         $this->assertEquals(422, $response->getApiProblem()->status);
     }
+
+    /**
+     * @dataProvider listMethods
+     * @group 19
+     */
+    public function testDoesNotAttemptToValidateAnEntityAsACollection($method)
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter(array(
+            'foo' => array(
+                'name' => 'foo',
+                'validators' => array(
+                    array('name' => 'Digits'),
+                ),
+            ),
+            'bar' => array(
+                'name' => 'bar',
+                'validators' => array(
+                    array(
+                        'name'    => 'Regex',
+                        'options' => array('pattern' => '/^[a-z]+/i'),
+                    ),
+                ),
+            ),
+        )));
+
+        // Create ContentValidationListener with rest controllers populated
+        $listener = new ContentValidationListener(array(
+            'Foo' => array('input_filter' => 'FooValidator'),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $request = new HttpRequest();
+        $request->setMethod($method);
+
+        $matches = new RouteMatch(array(
+            'controller' => 'Foo',
+            'foo_id'     => uniqid(),
+        ));
+
+        $dataParams = new ParameterDataContainer();
+
+        $params = array(
+            'foo' => 123,
+            'bar' => 'abc',
+        );
+
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $this->assertNull($listener->onRoute($event));
+        $this->assertNull($event->getResponse());
+    }
 }
