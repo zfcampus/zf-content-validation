@@ -297,7 +297,7 @@ class ContentValidationListener implements ListenerAggregateInterface
             return false;
         }
 
-        if ($request->isPost() && ArrayUtils::isHashTable($data)) {
+        if ($request->isPost() && (empty($data) || ArrayUtils::isHashTable($data))) {
             return false;
         }
 
