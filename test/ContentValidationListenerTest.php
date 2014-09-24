@@ -573,8 +573,12 @@ class ContentValidationListenerTest extends TestCase
      * @group method-specific
      * @dataProvider httpMethodSpecificInputFilters
      */
-    public function testCanFetchHttpMethodSpecificInputFilterWhenValidating($method, array $data, $expectedIsValid, $filterName)
-    {
+    public function testCanFetchHttpMethodSpecificInputFilterWhenValidating(
+        $method,
+        array $data,
+        $expectedIsValid,
+        $filterName
+    ) {
         $services = new ServiceManager();
         $this->configureInputFilters($services);
 
