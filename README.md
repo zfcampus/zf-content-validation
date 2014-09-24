@@ -154,6 +154,15 @@ get the deserialized content body parameters.
 ZF2 Services
 ============
 
+### Controller Plugins
+
+#### ZF\ContentValidation\InputFilter\InputFilterPlugin (aka getInputFilter)
+
+This plugin is available to Zend Framework 2 controllers. When invoked (`$this->getInputFilter()` or
+`$this->plugin('getinputfilter')->__invoke()`), it returns whatever is in the MVC event parameter
+`ZF\ContentValidation\InputFilter`, returning null for any value that is not an implementation of
+`Zend\InputFilter\InputFilter`.
+
 ### Service
 
 #### ZF\ContentValidation\InputFilter\InputFilterAbstractServiceFactory

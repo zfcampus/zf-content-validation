@@ -5,6 +5,11 @@
  */
 
 return array(
+    'controller_plugins' => array(
+        'invokables' => array(
+            'getinputfilter' => 'ZF\ContentValidation\InputFilter\InputFilterPlugin',
+        ),
+    ),
     'input_filter_specs' => array(
         /*
          * An array of service name => config pairs.
