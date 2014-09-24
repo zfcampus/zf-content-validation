@@ -67,8 +67,11 @@ class ContentValidationListener implements ListenerAggregateInterface
      * @param array $config
      * @param null|ServiceLocatorInterface $inputFilterManager
      */
-    public function __construct(array $config = array(), ServiceLocatorInterface $inputFilterManager = null, array $restControllers = array())
-    {
+    public function __construct(
+        array $config = array(),
+        ServiceLocatorInterface $inputFilterManager = null,
+        array $restControllers = array()
+    ) {
         $this->config             = $config;
         $this->inputFilterManager = $inputFilterManager;
         $this->restControllers    = $restControllers;
@@ -177,7 +180,9 @@ class ContentValidationListener implements ListenerAggregateInterface
         $inputFilter = $this->getInputFilter($inputFilterService);
 
         if ($isCollection) {
-            $inputFilterClass = $request->isPatch() ? __NAMESPACE__ . '\InputFilter\PatchCollectionInputFilter' : 'Zend\InputFilter\CollectionInputFilter';
+            $inputFilterClass = $request->isPatch()
+                ? __NAMESPACE__ . '\InputFilter\PatchCollectionInputFilter'
+                : 'Zend\InputFilter\CollectionInputFilter';
             $collectionInputFilter = new $inputFilterClass();
             $collectionInputFilter->setInputFilter($inputFilter);
             $inputFilter = $collectionInputFilter;

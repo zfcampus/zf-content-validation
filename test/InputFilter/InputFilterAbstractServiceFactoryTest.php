@@ -71,7 +71,8 @@ class InputFilterAbstractFactoryTest extends TestCase
     public function testUsesConfiguredValidationAndFilterManagerServicesWhenCreatingInputFilter()
     {
         $filters = new FilterPluginManager();
-        $filter  = function ($value) {};
+        $filter  = function ($value) {
+        };
         $filters->setService('foo', $filter);
 
         $validators = new ValidatorPluginManager();
