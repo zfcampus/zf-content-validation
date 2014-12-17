@@ -214,6 +214,7 @@ class ContentValidationListener implements ListenerAggregateInterface
 
         $inputFilter->setData($data);
         if ($inputFilter->isValid()) {
+            $dataContainer->setBodyParams($inputFilter->getValues());
             return;
         }
 

@@ -1046,6 +1046,48 @@ class ContentValidationListenerTest extends TestCase
         $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
         $this->assertEquals(422, $response->getApiProblem()->status);
     }
+    
+    /**
+     * @group 3
+     */
+    public function testSaveFilteredDataIntoDataContainer()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooFilter', $factory->createInputFilter(array(
+            'foo' => array(
+                'name' => 'foo',
+                'filters' => array(
+                    array('name' => 'StringTrim'),
+                ),
+            ),
+        )));
+        $listener = new ContentValidationListener(array(
+            'Foo' => array('input_filter' => 'FooFilter'),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array(
+            'foo' => ' abc ',
+        );
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $listener->onRoute($event);
+        $this->assertEquals('abc', $dataParams->getBodyParam('foo'));
+    }
 
     /**
      * @dataProvider listMethods
