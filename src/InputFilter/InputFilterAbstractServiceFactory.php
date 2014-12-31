@@ -115,7 +115,7 @@ class InputFilterAbstractServiceFactory implements AbstractFactoryInterface
      */
     protected function getInputFilterPluginManager(ServiceLocatorInterface $services)
     {
-        if ($services->has('InputFilterManager')) {
+        if ($services->has('InputFilterManager') && $services->has('FilterManager') && $services->has('ValidatorManager')) {
             return $services->get('InputFilterManager');
         }
 
