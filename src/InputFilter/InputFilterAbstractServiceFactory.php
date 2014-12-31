@@ -8,6 +8,7 @@ namespace ZF\ContentValidation\InputFilter;
 
 use Zend\Filter\FilterPluginManager;
 use Zend\InputFilter\Factory;
+use Zend\InputFilter\InputFilterPluginManager;
 use Zend\ServiceManager\AbstractFactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\Validator\ValidatorPluginManager;
@@ -71,7 +72,7 @@ class InputFilterAbstractServiceFactory implements AbstractFactoryInterface
             return $this->factory;
         }
 
-        $this->factory = new Factory();
+        $this->factory = new Factory($this->getInputFilterPluginManager($services));
         $this->factory
             ->getDefaultFilterChain()
             ->setPluginManager($this->getFilterPluginManager($services));
@@ -106,5 +107,18 @@ class InputFilterAbstractServiceFactory implements AbstractFactoryInterface
         }
 
         return new ValidatorPluginManager();
+    }
+
+    /**
+     * @param ServiceLocatorInterface $services
+     * @return \Zend\ServiceManager\AbstractPluginManager
+     */
+    protected function getInputFilterPluginManager(ServiceLocatorInterface $services)
+    {
+        if ($services->has('InputFilterManager')) {
+            return $services->get('InputFilterManager');
+        }
+
+        return new InputFilterPluginManager();
     }
 }
