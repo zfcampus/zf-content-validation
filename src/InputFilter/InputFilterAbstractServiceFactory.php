@@ -119,6 +119,6 @@ class InputFilterAbstractServiceFactory implements AbstractFactoryInterface
             return $services->get('InputFilterManager');
         }
 
-        return new InputFilterPluginManager();
+        return null;
     }
 }
