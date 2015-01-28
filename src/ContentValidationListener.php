@@ -76,8 +76,10 @@ class ContentValidationListener implements ListenerAggregateInterface
         $this->inputFilterManager   = $inputFilterManager;
         $this->restControllers      = $restControllers;
 
-        if (isset($config['methods_without_bodies'])) {
-            ArrayUtils::merge($this->methodsWithoutBodies, $config['methods_without_bodies']);
+        if (isset($config['methods_without_bodies']) && is_array($config['methods_without_bodies'])) {
+            foreach ($config['methods_without_bodies'] as $method) {
+                $this->addMethodWithoutBody($method);
+            }
         }
     }
 
