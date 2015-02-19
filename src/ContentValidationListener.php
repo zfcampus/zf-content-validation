@@ -180,23 +180,33 @@ class ContentValidationListener implements ListenerAggregateInterface
         $inputFilter = $this->getInputFilter($inputFilterService);
 
         if ($isCollection) {
-            $inputFilterClass = $request->isPatch()
-                ? __NAMESPACE__ . '\InputFilter\PatchCollectionInputFilter'
-                : 'Zend\InputFilter\CollectionInputFilter';
-            $collectionInputFilter = new $inputFilterClass();
+            $collectionInputFilter = new CollectionInputFilter();
             $collectionInputFilter->setInputFilter($inputFilter);
             $inputFilter = $collectionInputFilter;
         }
 
         $e->setParam('ZF\ContentValidation\InputFilter', $inputFilter);
 
-        // We cannot create validation groups when validating collections, as
-        // the values submitted may vary between each entity in the collection.
-        // If you need to loosen restrictions, create a PATCH-specific input
-        // filter.
-        if (! $isCollection && $request->isPatch()) {
+        $inputFilter->setData($data);
+        if (! $request->isPatch()) {
+            if ($inputFilter->isValid()) {
+                return;
+            }
+        } else {
+            if ($isCollection) {
+                $validationGroup = $data;
+                foreach ($validationGroup as &$subData) {
+                    $subData = array_keys($subData);
+                }
+            } else {
+                $validationGroup = array_keys($data);
+            }
+
             try {
-                $inputFilter->setValidationGroup(array_keys($data));
+                $inputFilter->setValidationGroup($validationGroup);
+                if ($inputFilter->isValid()) {
+                    return;
+                }
             } catch (InputFilterInvalidArgumentException $ex) {
                 $pattern = '/expects a list of valid input names; "(?P<field>[^"]+)" was not found/';
                 $matched = preg_match($pattern, $ex->getMessage(), $matches);
@@ -210,11 +220,6 @@ class ContentValidationListener implements ListenerAggregateInterface
                     new ApiProblem(400, 'Unrecognized field "' . $matches['field'] . '"')
                 );
             }
-        }
-
-        $inputFilter->setData($data);
-        if ($inputFilter->isValid()) {
-            return;
         }
 
         return new ApiProblemResponse(
