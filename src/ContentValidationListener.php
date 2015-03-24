@@ -240,7 +240,12 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         });
 
         $last = $results->last();
-        if ($last instanceof ApiProblem || $last instanceof ApiProblemResponse) {
+
+        if ($last instanceof ApiProblem) {
+            $last = new ApiProblemResponse($last);
+        }
+
+        if ($last instanceof ApiProblemResponse) {
             return $last;
         }
 
