@@ -9,6 +9,7 @@ namespace ZF\ContentValidation\InputFilter;
 use Zend\Filter\FilterPluginManager;
 use Zend\InputFilter\Factory;
 use Zend\ServiceManager\AbstractFactoryInterface;
+use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\Validator\ValidatorPluginManager;
 
@@ -27,7 +28,10 @@ class InputFilterAbstractServiceFactory implements AbstractFactoryInterface
      */
     public function canCreateServiceWithName(ServiceLocatorInterface $inputFilters, $cName, $rName)
     {
-        $services = $inputFilters->getServiceLocator();
+        $services = $inputFilters instanceof ServiceLocatorAwareInterface
+            ? $inputFilters->getServiceLocator()
+            : $inputFilters;
+
         if (! $services instanceof ServiceLocatorInterface
             || ! $services->has('Config')
         ) {
@@ -52,7 +56,9 @@ class InputFilterAbstractServiceFactory implements AbstractFactoryInterface
      */
     public function createServiceWithName(ServiceLocatorInterface $inputFilters, $cName, $rName)
     {
-        $services  = $inputFilters->getServiceLocator();
+        $services = $inputFilters instanceof ServiceLocatorAwareInterface
+            ? $inputFilters->getServiceLocator()
+            : $inputFilters;
         $allConfig = $services->get('Config');
         $config    = $allConfig['input_filter_specs'][$rName];
 
