@@ -7,6 +7,7 @@
 namespace ZFTest\ContentValidation;
 
 use PHPUnit_Framework_TestCase as TestCase;
+use Zend\EventManager\EventManager;
 use Zend\EventManager\EventManagerInterface;
 use Zend\Http\Request as HttpRequest;
 use Zend\InputFilter\Factory as InputFilterFactory;
@@ -18,6 +19,9 @@ use Zend\Stdlib\Parameters;
 use Zend\Stdlib\Request as StdlibRequest;
 use ZF\ContentNegotiation\ParameterDataContainer;
 use ZF\ContentValidation\ContentValidationListener;
+use Zend\InputFilter\InputFilterInterface;
+use ZF\ApiProblem\ApiProblemResponse;
+use ZF\ApiProblem\ApiProblem;
 
 class ContentValidationListenerTest extends TestCase
 {
@@ -1152,5 +1156,173 @@ class ContentValidationListenerTest extends TestCase
         $response = $listener->onRoute($event);
         $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
         $this->assertEquals(422, $response->getApiProblem()->status);
+    }
+
+    /**
+     * @group event
+     */
+    public function testTriggeredEventBeforeValidate()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter(array(
+            'foo' => array(
+                'name' => 'foo',
+                'validators' => array(
+                    array('name' => 'Digits'),
+                ),
+            )
+        )));
+        $listener = new ContentValidationListener(array(
+            'Foo' => array('input_filter' => 'FooValidator'),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $eventManager = new EventManager();
+        $listener->setEventManager($eventManager);
+
+        $runner = $this;
+        $hasRun = false;
+        $eventManager->attach(ContentValidationListener::EVENT_BEFORE_VALIDATE, function(MvcEvent $e) use ($runner, &$hasRun) {
+            $runner->assertInstanceOf('Zend\InputFilter\InputFilterInterface', $e->getParam('ZF\ContentValidation\InputFilter'));
+            $hasRun = true;
+        });
+
+        $request = new HttpRequest();
+        $request->setMethod('PUT');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array_fill(0, 10, array(
+            'foo' => '123',
+        ));
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($event);
+        $this->assertTrue($hasRun);
+        $this->assertEmpty($response);
+    }
+
+    /**
+     * @group event
+     */
+    public function testTriggeredEventBeforeValidateReturnsApiProblemResponseFromApiProblem()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter(array(
+            'foo' => array(
+                'name' => 'foo',
+                'validators' => array(
+                    array('name' => 'Digits'),
+                ),
+            )
+        )));
+        $listener = new ContentValidationListener(array(
+            'Foo' => array('input_filter' => 'FooValidator'),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $eventManager = new EventManager();
+        $listener->setEventManager($eventManager);
+
+        $runner = $this;
+        $hasRun = false;
+        $eventManager->attach(ContentValidationListener::EVENT_BEFORE_VALIDATE, function(MvcEvent $e) use ($runner, &$hasRun) {
+            $runner->assertInstanceOf('Zend\InputFilter\InputFilterInterface', $e->getParam('ZF\ContentValidation\InputFilter'));
+            $hasRun = true;
+
+            return new ApiProblem(422, 'Validation failed');
+        });
+
+        $request = new HttpRequest();
+        $request->setMethod('PUT');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array_fill(0, 10, array(
+            'foo' => '123',
+        ));
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($event);
+        $this->assertTrue($hasRun);
+        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        $this->assertEquals(422, $response->getApiProblem()->status);
+        $this->assertEquals('Validation failed', $response->getApiProblem()->detail);
+    }
+
+
+    /**
+     * @group event
+     */
+    public function testTriggeredEventBeforeValidateReturnsApiProblemResponseFromCallback()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter(array(
+            'foo' => array(
+                'name' => 'foo',
+                'validators' => array(
+                    array('name' => 'Digits'),
+                ),
+            )
+        )));
+        $listener = new ContentValidationListener(array(
+            'Foo' => array('input_filter' => 'FooValidator'),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $eventManager = new EventManager();
+        $listener->setEventManager($eventManager);
+
+        $runner = $this;
+        $hasRun = false;
+        $eventManager->attach(ContentValidationListener::EVENT_BEFORE_VALIDATE, function(MvcEvent $e) use ($runner, &$hasRun) {
+            $runner->assertInstanceOf('Zend\InputFilter\InputFilterInterface', $e->getParam('ZF\ContentValidation\InputFilter'));
+            $hasRun = true;
+
+            return new ApiProblemResponse(new ApiProblem(422, 'Validation failed'));
+        });
+
+        $request = new HttpRequest();
+        $request->setMethod('PUT');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array_fill(0, 10, array(
+            'foo' => '123',
+        ));
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($event);
+        $this->assertTrue($hasRun);
+        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        $this->assertEquals(422, $response->getApiProblem()->status);
+        $this->assertEquals('Validation failed', $response->getApiProblem()->detail);
     }
 }
