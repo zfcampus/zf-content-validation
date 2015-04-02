@@ -1246,10 +1246,16 @@ class ContentValidationListenerTest extends TestCase
 
         $runner = $this;
         $hasRun = false;
-        $eventManager->attach(ContentValidationListener::EVENT_BEFORE_VALIDATE, function(MvcEvent $e) use ($runner, &$hasRun) {
-            $runner->assertInstanceOf('Zend\InputFilter\InputFilterInterface', $e->getParam('ZF\ContentValidation\InputFilter'));
-            $hasRun = true;
-        });
+        $eventManager->attach(
+            ContentValidationListener::EVENT_BEFORE_VALIDATE,
+            function (MvcEvent $e) use ($runner, &$hasRun) {
+                $runner->assertInstanceOf(
+                    'Zend\InputFilter\InputFilterInterface',
+                    $e->getParam('ZF\ContentValidation\InputFilter')
+                );
+                $hasRun = true;
+            }
+        );
 
         $request = new HttpRequest();
         $request->setMethod('PUT');
@@ -1299,12 +1305,17 @@ class ContentValidationListenerTest extends TestCase
 
         $runner = $this;
         $hasRun = false;
-        $eventManager->attach(ContentValidationListener::EVENT_BEFORE_VALIDATE, function(MvcEvent $e) use ($runner, &$hasRun) {
-            $runner->assertInstanceOf('Zend\InputFilter\InputFilterInterface', $e->getParam('ZF\ContentValidation\InputFilter'));
-            $hasRun = true;
-
-            return new ApiProblem(422, 'Validation failed');
-        });
+        $eventManager->attach(
+            ContentValidationListener::EVENT_BEFORE_VALIDATE,
+            function (MvcEvent $e) use ($runner, &$hasRun) {
+                $runner->assertInstanceOf(
+                    'Zend\InputFilter\InputFilterInterface',
+                    $e->getParam('ZF\ContentValidation\InputFilter')
+                );
+                $hasRun = true;
+                return new ApiProblem(422, 'Validation failed');
+            }
+        );
 
         $request = new HttpRequest();
         $request->setMethod('PUT');
@@ -1357,12 +1368,17 @@ class ContentValidationListenerTest extends TestCase
 
         $runner = $this;
         $hasRun = false;
-        $eventManager->attach(ContentValidationListener::EVENT_BEFORE_VALIDATE, function(MvcEvent $e) use ($runner, &$hasRun) {
-            $runner->assertInstanceOf('Zend\InputFilter\InputFilterInterface', $e->getParam('ZF\ContentValidation\InputFilter'));
-            $hasRun = true;
-
-            return new ApiProblemResponse(new ApiProblem(422, 'Validation failed'));
-        });
+        $eventManager->attach(
+            ContentValidationListener::EVENT_BEFORE_VALIDATE,
+            function (MvcEvent $e) use ($runner, &$hasRun) {
+                $runner->assertInstanceOf(
+                    'Zend\InputFilter\InputFilterInterface',
+                    $e->getParam('ZF\ContentValidation\InputFilter')
+                );
+                $hasRun = true;
+                return new ApiProblemResponse(new ApiProblem(422, 'Validation failed'));
+            }
+        );
 
         $request = new HttpRequest();
         $request->setMethod('PUT');
