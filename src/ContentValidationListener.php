@@ -6,7 +6,9 @@
 
 namespace ZF\ContentValidation;
 
+use Zend\EventManager\EventManager;
 use Zend\EventManager\EventManagerInterface;
+use Zend\EventManager\EventManagerAwareInterface;
 use Zend\EventManager\ListenerAggregateInterface;
 use Zend\Http\Request as HttpRequest;
 use Zend\InputFilter\CollectionInputFilter;
@@ -20,12 +22,16 @@ use ZF\ApiProblem\ApiProblem;
 use ZF\ApiProblem\ApiProblemResponse;
 use ZF\ContentNegotiation\ParameterDataContainer;
 
-class ContentValidationListener implements ListenerAggregateInterface
+class ContentValidationListener implements ListenerAggregateInterface, EventManagerAwareInterface
 {
+    const EVENT_BEFORE_VALIDATE = 'contentvalidation.beforevalidate';
+
     /**
      * @var array
      */
     protected $config = array();
+
+    protected $events;
 
     /**
      * @var ServiceLocatorInterface
@@ -75,6 +81,42 @@ class ContentValidationListener implements ListenerAggregateInterface
         $this->config             = $config;
         $this->inputFilterManager = $inputFilterManager;
         $this->restControllers    = $restControllers;
+    }
+
+    /**
+     * Set event manager instance
+     *
+     * Sets the event manager identifiers to the current class, this class, and
+     * the resource interface.
+     *
+     * @param  EventManagerInterface $events
+     * @return ContentValidationListener
+     */
+    public function setEventManager(EventManagerInterface $events)
+    {
+        $events->addIdentifiers(array(
+            get_class($this),
+            __CLASS__,
+            self::EVENT_BEFORE_VALIDATE
+        ));
+        $this->events = $events;
+
+        return $this;
+    }
+
+    /**
+     * Retrieve event manager
+     *
+     * Lazy-instantiates an EM instance if none provided.
+     *
+     * @return EventManagerInterface
+     */
+    public function getEventManager()
+    {
+        if (!$this->events) {
+            $this->setEventManager(new EventManager());
+        }
+        return $this->events;
     }
 
     /**
@@ -186,6 +228,23 @@ class ContentValidationListener implements ListenerAggregateInterface
         }
 
         $e->setParam('ZF\ContentValidation\InputFilter', $inputFilter);
+
+        $events = $this->getEventManager();
+        $results = $events->trigger(self::EVENT_BEFORE_VALIDATE, $e, function ($result) {
+            return ($result instanceof ApiProblem
+                || $result instanceof ApiProblemResponse
+            );
+        });
+
+        $last = $results->last();
+
+        if ($last instanceof ApiProblem) {
+            $last = new ApiProblemResponse($last);
+        }
+
+        if ($last instanceof ApiProblemResponse) {
+            return $last;
+        }
 
         $inputFilter->setData($data);
         if (! $request->isPatch()) {
