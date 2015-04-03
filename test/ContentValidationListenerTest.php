@@ -57,6 +57,26 @@ class ContentValidationListenerTest extends TestCase
         );
     }
 
+    public function testAddCustomMethods()
+    {
+        $className = 'ZF\ContentValidation\ContentValidationListener';
+        $listener = $this->getMockBuilder($className)
+                ->disableOriginalConstructor()
+                ->getMock();
+
+        $listener->expects($this->at(0))->method('addMethodWithoutBody')->with('LINK');
+        $listener->expects($this->at(1))->method('addMethodWithoutBody')->with('UNLINK');
+
+        $reflectedClass = new \ReflectionClass($className);
+        $constructor = $reflectedClass->getConstructor();
+        $constructor->invoke($listener, array(
+            'methods_without_bodies' => array(
+                'LINK',
+                'UNLINK',
+            ),
+        ));
+    }
+
     /**
      * @dataProvider nonBodyMethods
      */
