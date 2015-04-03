@@ -9,13 +9,15 @@ namespace ZF\ContentValidation;
 use Zend\EventManager\EventManagerInterface;
 use Zend\EventManager\ListenerAggregateInterface;
 use Zend\Http\Request as HttpRequest;
-use Zend\InputFilter\CollectionInputFilter;
+use Zend\Http\Response;
+use Zend\InputFilter\BaseInputFilter;
 use Zend\InputFilter\Exception\InvalidArgumentException as InputFilterInvalidArgumentException;
 use Zend\InputFilter\InputFilterInterface;
 use Zend\Mvc\MvcEvent;
 use Zend\Mvc\Router\RouteMatch;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\Stdlib\ArrayUtils;
+use Zend\Stdlib\CallbackHandler;
 use ZF\ApiProblem\ApiProblem;
 use ZF\ApiProblem\ApiProblemResponse;
 use ZF\ContentNegotiation\ParameterDataContainer;
@@ -40,7 +42,7 @@ class ContentValidationListener implements ListenerAggregateInterface
     protected $inputFilters = array();
 
     /**
-     * @var \Zend\Stdlib\CallbackHandler[]
+     * @var CallbackHandler[]
      */
     protected $listeners = array();
 
@@ -213,8 +215,34 @@ class ContentValidationListener implements ListenerAggregateInterface
         }
 
         $inputFilter->setData($data);
+
         if ($inputFilter->isValid()) {
-            $dataContainer->setBodyParams($inputFilter->getValues());
+            if (isset($this->config[$controllerService]['use_raw_data']) && $this->config[$controllerService]['use_raw_data'] === true) {
+                $dataContainer->setBodyParams($data);
+
+                return;
+            }
+
+            if (!$inputFilter instanceof BaseInputFilter) {
+                return;
+            }
+
+            $bodyParams = $inputFilter->getValues();
+            $unknown = $inputFilter->getUnknown();
+
+            if (count($unknown) !== 0) {
+                if ($this->isAllowsOnlyFieldsInFilter($controllerService)) {
+                    $fields = implode(', ', array_keys($unknown));
+                    $detail = sprintf('Unrecognized fields: %s', $fields);
+                    $problem = new ApiProblem(Response::STATUS_CODE_422, $detail);
+
+                    return new ApiProblemResponse($problem);
+                } elseif (count($inputFilter->getInputs()) === 0) {
+                    $bodyParams = $unknown;
+                }
+            }
+
+            $dataContainer->setBodyParams($bodyParams);
             return;
         }
 
@@ -223,6 +251,20 @@ class ContentValidationListener implements ListenerAggregateInterface
                 'validation_messages' => $inputFilter->getMessages(),
             ))
         );
+    }
+
+    /**
+     * @param string $controllerService
+     *
+     * @return boolean
+     */
+    protected function isAllowsOnlyFieldsInFilter($controllerService)
+    {
+        if (isset($this->config[$controllerService]['allows_only_fields_in_filter'])) {
+            return true === $this->config[$controllerService]['allows_only_fields_in_filter'];
+        }
+
+        return false;
     }
 
     /**
