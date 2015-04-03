@@ -88,7 +88,7 @@ class ContentValidationListener implements ListenerAggregateInterface
      * @param EventManagerInterface $events
      * @param int $priority
      */
-    public function attach(EventManagerInterface $events)
+    public function attach(EventManagerInterface $events, $priority = 1)
     {
         // trigger after authentication/authorization and content negotiation
         $this->listeners[] = $events->attach(MvcEvent::EVENT_ROUTE, array($this, 'onRoute'), -650);
