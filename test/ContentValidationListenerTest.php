@@ -1262,6 +1262,56 @@ class ContentValidationListenerTest extends TestCase
     /**
      * @group 29
      */
+    public function testUnknownDataMustBeMergedWithFilteredData()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooFilter', $factory->createInputFilter(array(
+            'foo' => array(
+                'name' => 'foo',
+                'filters' => array(
+                    array('name' => 'StringTrim'),
+                ),
+            ),
+        )));
+        $listener = new ContentValidationListener(array(
+            'Foo' => array(
+                'input_filter' => 'FooFilter',
+                'allows_only_fields_in_filter' => false,
+                'use_raw_data' => false,
+            ),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array(
+            'foo' => ' abc ',
+            'unknown' => 'value'
+        );
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $result = $listener->onRoute($event);
+        $this->assertNotInstanceOf('ZF\ApiProblem\ApiProblemResponse', $result);
+        $this->assertEquals('abc', $dataParams->getBodyParam('foo'));
+        $this->assertEquals('value', $dataParams->getBodyParam('unknown'));
+    }
+
+
+    /**
+     * @group 29
+     */
     public function testSaveUnknownDataWhenEmptyInputFilter()
     {
         $services = new ServiceManager();

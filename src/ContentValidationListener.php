@@ -308,11 +308,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
             return new ApiProblemResponse($problem);
         }
 
-        if (count($bodyParams) === 0) {
-            $bodyParams = $unknown;
-        }
-
-        $dataContainer->setBodyParams($bodyParams);
+        $dataContainer->setBodyParams(array_merge($bodyParams, $unknown));
     }
 
     /**
