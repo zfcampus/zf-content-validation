@@ -1072,44 +1072,129 @@ class ContentValidationListenerTest extends TestCase
     }
 
     /**
-     * @group 3
+     * @group 29
      */
-    public function testFailsValidationOfPartialSetsForPatchRequestsForCollectionThatIncludeUnknownInputs()
+    public function testSaveFilteredDataIntoDataContainer()
     {
         $services = new ServiceManager();
         $factory  = new InputFilterFactory();
-        $services->setService('FooValidator', $factory->createInputFilter(array(
+        $services->setService('FooFilter', $factory->createInputFilter(array(
             'foo' => array(
                 'name' => 'foo',
-                'validators' => array(
-                    array('name' => 'Digits'),
-                ),
-            ),
-            'bar' => array(
-                'name' => 'bar',
-                'validators' => array(
-                    array(
-                        'name'    => 'Regex',
-                        'options' => array('pattern' => '/^[a-z]+/i'),
-                    ),
+                'filters' => array(
+                    array('name' => 'StringTrim'),
                 ),
             ),
         )));
         $listener = new ContentValidationListener(array(
-            'Foo' => array('input_filter' => 'FooValidator'),
+            'Foo' => array(
+                'input_filter' => 'FooFilter',
+                'use_raw_data' => false,
+            ),
         ), $services, array(
             'Foo' => 'foo_id',
         ));
 
         $request = new HttpRequest();
-        $request->setMethod('PATCH');
+        $request->setMethod('POST');
 
         $matches = new RouteMatch(array('controller' => 'Foo'));
 
-        $params = array_fill(0, 10, array(
-            'foo' => 123,
-            'baz' => 'who cares?',
+        $params = array(
+            'foo' => ' abc ',
+        );
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $this->assertNull($listener->onRoute($event));
+        $this->assertEquals('abc', $dataParams->getBodyParam('foo'));
+    }
+
+    /**
+     * @group 29
+     */
+    public function testShouldSaveFilteredDataWhenRequiredEvenIfInputFilterIsNotUnknownInputsCapable()
+    {
+        $services = new ServiceManager();
+        $inputFilter = $this->getMock('Zend\InputFilter\InputFilterInterface');
+        $inputFilter->expects($this->any())
+            ->method('setData')
+            ->willReturn($this->returnValue(null));
+        $inputFilter->expects($this->any(''))
+            ->method('isValid')
+            ->will($this->returnValue(true));
+        $inputFilter->expects($this->any(''))
+            ->method('getValues')
+            ->will($this->returnValue(array('foo' => 'abc')));
+
+        $factory  = new InputFilterFactory();
+        $services->setService('FooFilter', $inputFilter);
+        $listener = new ContentValidationListener(array(
+            'Foo' => array(
+                'input_filter' => 'FooFilter',
+                'use_raw_data' => false,
+            ),
+        ), $services, array(
+            'Foo' => 'foo_id',
         ));
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array(
+            'foo' => ' abc ',
+        );
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $this->assertNull($listener->onRoute($event));
+        $this->assertEquals('abc', $dataParams->getBodyParam('foo'));
+    }
+
+
+    /**
+     * @group 29
+     */
+    public function testSaveRawDataIntoDataContainer()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooFilter', $factory->createInputFilter(array(
+            'foo' => array(
+                'name' => 'foo',
+                'filters' => array(
+                    array('name' => 'StringTrim'),
+                ),
+            ),
+        )));
+        $listener = new ContentValidationListener(array(
+            'Foo' => array('input_filter' => 'FooFilter', 'use_raw_data' => true),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array(
+            'foo' => ' abc ',
+        );
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
@@ -1119,13 +1204,152 @@ class ContentValidationListenerTest extends TestCase
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
 
-        $response = $listener->onRoute($event);
-        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
-        return $response;
+        $listener->onRoute($event);
+        $this->assertEquals(' abc ', $dataParams->getBodyParam('foo'));
     }
 
     /**
-     * @group 3
+     * @group 29
+     */
+    public function testTrySaveUnknownData()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooFilter', $factory->createInputFilter(array(
+            'foo' => array(
+                'name' => 'foo',
+                'filters' => array(
+                    array('name' => 'StringTrim'),
+                ),
+            ),
+        )));
+        $listener = new ContentValidationListener(array(
+            'Foo' => array(
+                'input_filter' => 'FooFilter',
+                'allows_only_fields_in_filter' => true,
+                'use_raw_data' => false,
+            ),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array(
+            'foo' => ' abc ',
+            'unknown' => 'value'
+        );
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $result = $listener->onRoute($event);
+
+        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $result);
+        $apiProblemData = $result->getApiProblem()->toArray();
+        $this->assertEquals(422, $apiProblemData['status']);
+        $this->assertContains('Unrecognized fields', $apiProblemData['detail']);
+    }
+
+    /**
+     * @group 29
+     */
+    public function testUnknownDataMustBeMergedWithFilteredData()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooFilter', $factory->createInputFilter(array(
+            'foo' => array(
+                'name' => 'foo',
+                'filters' => array(
+                    array('name' => 'StringTrim'),
+                ),
+            ),
+        )));
+        $listener = new ContentValidationListener(array(
+            'Foo' => array(
+                'input_filter' => 'FooFilter',
+                'allows_only_fields_in_filter' => false,
+                'use_raw_data' => false,
+            ),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array(
+            'foo' => ' abc ',
+            'unknown' => 'value'
+        );
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $result = $listener->onRoute($event);
+        $this->assertNotInstanceOf('ZF\ApiProblem\ApiProblemResponse', $result);
+        $this->assertEquals('abc', $dataParams->getBodyParam('foo'));
+        $this->assertEquals('value', $dataParams->getBodyParam('unknown'));
+    }
+
+
+    /**
+     * @group 29
+     */
+    public function testSaveUnknownDataWhenEmptyInputFilter()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooFilter', $factory->createInputFilter(array()));
+        $listener = new ContentValidationListener(array(
+            'Foo' => array(
+                'input_filter' => 'FooFilter',
+                'use_raw_data' => false,
+            ),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array(
+            'foo' => ' abc ',
+            'unknown' => 'value'
+        );
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $listener->onRoute($event);
+
+        $this->assertEquals($params, $dataParams->getBodyParams());
+    }
+
+    /**
      * @depends testFailsValidationOfPartialSetsForPatchRequestsForCollectionThatIncludeUnknownInputs
      */
     public function testInvalidValidationGroupOnCollectionPatchIs400Response($response)

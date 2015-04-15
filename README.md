@@ -83,6 +83,17 @@ Example where there is a default as well as a GET filter:
 In the above example, the `Application\Controller\HelloWorld\Validator` service will be selected for
 `PATCH`, `PUT`, or `DELETE` requests, while the `Application\Controller\HelloWorld\CreationValidator`will be selected for `POST` requests.
 
+Starting in version 1.1.0, two additional keys can be defined to affect application validation
+behavior:
+
+- `use_raw_data`: if NOT present, raw data is ALWAYS injected into the "BodyParams" container (defined
+  by zf-content-negotiation).  If this key is present and a boolean false, then the validated,
+  filtered data from the input filter will be used instead.
+
+- `allows_only_fields_in_filter`: if present, and `use_raw_data` is boolean false, the value of this
+  flag will define whether or not additional fields present in the payload will be merged with the
+  filtered data.
+
 #### input_filter_spec
 
 `input_filter_spec` is for configuration-driven creation of input filters.  The keys for this array
