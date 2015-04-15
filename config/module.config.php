@@ -23,7 +23,7 @@ return array(
     ),
     'input_filters' => array(
         'abstract_factories' => array(
-            'ZF\ContentValidation\InputFilter\InputFilterAbstractServiceFactory',
+            'Zend\InputFilter\InputFilterAbstractServiceFactory',
         ),
     ),
     'service_manager' => array(
