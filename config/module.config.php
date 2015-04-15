@@ -38,6 +38,7 @@ return array(
         ),
     ),
     'zf-content-validation' => array(
+        'methods_without_bodies' => array(),
         /*
          * An array of controller service name => config pairs.
          *

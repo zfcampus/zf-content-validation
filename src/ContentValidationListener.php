@@ -18,6 +18,7 @@ use Zend\Mvc\MvcEvent;
 use Zend\Mvc\Router\RouteMatch;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\Stdlib\ArrayUtils;
+use Zend\Stdlib\CallbackHandler;
 use ZF\ApiProblem\ApiProblem;
 use ZF\ApiProblem\ApiProblemResponse;
 use ZF\ContentNegotiation\ParameterDataContainer;
@@ -46,7 +47,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
     protected $inputFilters = array();
 
     /**
-     * @var \Zend\Stdlib\CallbackHandler[]
+     * @var CallbackHandler[]
      */
     protected $listeners = array();
 
@@ -78,9 +79,15 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         ServiceLocatorInterface $inputFilterManager = null,
         array $restControllers = array()
     ) {
-        $this->config             = $config;
-        $this->inputFilterManager = $inputFilterManager;
-        $this->restControllers    = $restControllers;
+        $this->config               = $config;
+        $this->inputFilterManager   = $inputFilterManager;
+        $this->restControllers      = $restControllers;
+
+        if (isset($config['methods_without_bodies']) && is_array($config['methods_without_bodies'])) {
+            foreach ($config['methods_without_bodies'] as $method) {
+                $this->addMethodWithoutBody($method);
+            }
+        }
     }
 
     /**
@@ -286,6 +293,16 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
                 'validation_messages' => $inputFilter->getMessages(),
             ))
         );
+    }
+
+    /**
+     * Add HTTP Method without body content
+     *
+     * @param string $method
+     */
+    public function addMethodWithoutBody($method)
+    {
+        $this->methodsWithoutBodies[] = $method;
     }
 
     /**
