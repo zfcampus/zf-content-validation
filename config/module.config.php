@@ -1,4 +1,4 @@
-<?php
+<?php // @codingStandardsIgnoreFile
 /**
  * @license   http://opensource.org/licenses/BSD-3-Clause BSD-3-Clause
  * @copyright Copyright (c) 2014 Zend Technologies USA Inc. (http://www.zend.com)
@@ -55,6 +55,19 @@ return array(
          * "input_filter" key, when defined, otherwise. If none can be determined,
          * the module will assume no validation is defined, and that the content
          * provided is valid.
+         *
+         * Additionally, you can define either of the following two keys to
+         * further define application validation behavior:
+         *
+         * - use_raw_data: if NOT present, raw data is ALWAYS injected into 
+         *   the "BodyParams" container (defined by zf-content-negotiation).
+         *   If this key is present and a boolean false, then the validated,
+         *   filtered data from the input filter will be used instead.
+         *
+         * - allows_only_fields_in_filter: if present, and use_raw_data is
+         *   boolean false, the value of this flag will define whether or
+         *   not additional fields present in the payload will be merged
+         *   with the filtered data.
          */
     ),
 );
