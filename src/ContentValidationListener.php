@@ -217,7 +217,8 @@ class ContentValidationListener implements ListenerAggregateInterface
         $inputFilter->setData($data);
 
         if ($inputFilter->isValid()) {
-            if (isset($this->config[$controllerService]['use_raw_data']) && $this->config[$controllerService]['use_raw_data'] === true) {
+            if (isset($this->config[$controllerService]['use_raw_data'])
+                    && $this->config[$controllerService]['use_raw_data'] === true) {
                 $dataContainer->setBodyParams($data);
 
                 return;
