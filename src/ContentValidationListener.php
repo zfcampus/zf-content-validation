@@ -11,9 +11,11 @@ use Zend\EventManager\EventManagerInterface;
 use Zend\EventManager\EventManagerAwareInterface;
 use Zend\EventManager\ListenerAggregateInterface;
 use Zend\Http\Request as HttpRequest;
+use Zend\Http\Response;
 use Zend\InputFilter\CollectionInputFilter;
 use Zend\InputFilter\Exception\InvalidArgumentException as InputFilterInvalidArgumentException;
 use Zend\InputFilter\InputFilterInterface;
+use Zend\InputFilter\UnknownInputsCapableInterface;
 use Zend\Mvc\MvcEvent;
 use Zend\Mvc\Router\RouteMatch;
 use Zend\ServiceManager\ServiceLocatorInterface;
@@ -254,45 +256,63 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         }
 
         $inputFilter->setData($data);
-        if (! $request->isPatch()) {
-            if ($inputFilter->isValid()) {
-                return;
-            }
-        } else {
-            if ($isCollection) {
-                $validationGroup = $data;
-                foreach ($validationGroup as &$subData) {
-                    $subData = array_keys($subData);
-                }
-            } else {
-                $validationGroup = array_keys($data);
-            }
 
-            try {
-                $inputFilter->setValidationGroup($validationGroup);
-                if ($inputFilter->isValid()) {
-                    return;
-                }
-            } catch (InputFilterInvalidArgumentException $ex) {
-                $pattern = '/expects a list of valid input names; "(?P<field>[^"]+)" was not found/';
-                $matched = preg_match($pattern, $ex->getMessage(), $matches);
-                if (!$matched) {
-                    return new ApiProblemResponse(
-                        new ApiProblem(400, $ex)
-                    );
-                }
+        $status = ($request->isPatch())
+            ? $this->validatePatch($inputFilter, $data, $isCollection)
+            : $inputFilter->isValid();
 
-                return new ApiProblemResponse(
-                    new ApiProblem(400, 'Unrecognized field "' . $matches['field'] . '"')
-                );
-            }
+        if ($status instanceof ApiProblemResponse) {
+            return $status;
         }
 
-        return new ApiProblemResponse(
-            new ApiProblem(422, 'Failed Validation', null, null, array(
-                'validation_messages' => $inputFilter->getMessages(),
-            ))
-        );
+        // Invalid? Return a 422 response.
+        if (false === $status) {
+            return new ApiProblemResponse(
+                new ApiProblem(422, 'Failed Validation', null, null, array(
+                    'validation_messages' => $inputFilter->getMessages(),
+                ))
+            );
+        }
+
+        // Should we use the raw data vs. the filtered data?
+        // - If no `use_raw_data` flag is present, always use the raw data, as
+        //   that was the default experience starting in 1.0.
+        // - If the flag is present AND is boolean true, that is also
+        //   an indicator that the raw data should be present.
+        if (! isset($this->config[$controllerService]['use_raw_data'])
+            || (isset($this->config[$controllerService]['use_raw_data'])
+                && $this->config[$controllerService]['use_raw_data'] === true)
+        ) {
+            $dataContainer->setBodyParams($data);
+            return;
+        }
+
+        // If we don't have an instance of UnknownInputsCapableInterface, or no
+        // unknown data is in the input filter, at this point we can just
+        // set the input filter values directly into the data container.
+        if (! $inputFilter instanceof UnknownInputsCapableInterface
+            || ! $inputFilter->hasUnknown()
+        ) {
+            $dataContainer->setBodyParams($inputFilter->getValues());
+            return;
+        }
+
+        $bodyParams = $inputFilter->getValues();
+        $unknown    = $inputFilter->getUnknown();
+
+        if ($this->allowsOnlyFieldsInFilter($controllerService)) {
+            $fields  = implode(', ', array_keys($unknown));
+            $detail  = sprintf('Unrecognized fields: %s', $fields);
+            $problem = new ApiProblem(Response::STATUS_CODE_422, $detail);
+
+            return new ApiProblemResponse($problem);
+        }
+
+        if (count($bodyParams) === 0) {
+            $bodyParams = $unknown;
+        }
+
+        $dataContainer->setBodyParams($bodyParams);
     }
 
     /**
@@ -303,6 +323,19 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
     public function addMethodWithoutBody($method)
     {
         $this->methodsWithoutBodies[] = $method;
+    }
+
+    /**
+     * @param string $controllerService
+     * @return boolean
+     */
+    protected function allowsOnlyFieldsInFilter($controllerService)
+    {
+        if (isset($this->config[$controllerService]['allows_only_fields_in_filter'])) {
+            return true === $this->config[$controllerService]['allows_only_fields_in_filter'];
+        }
+
+        return false;
     }
 
     /**
@@ -393,5 +426,42 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         }
 
         return (null === $request->getQuery($identifierName, null));
+    }
+
+    /**
+     * Validate a PATCH request
+     *
+     * @param InputFilterInterface $inputFilter
+     * @param array|object $data
+     * @param bool $isCollection
+     * @return bool|ApiProblemResponse
+     */
+    protected function validatePatch(InputFilterInterface $inputFilter, $data, $isCollection)
+    {
+        if ($isCollection) {
+            $validationGroup = $data;
+            foreach ($validationGroup as &$subData) {
+                $subData = array_keys($subData);
+            }
+        } else {
+            $validationGroup = array_keys($data);
+        }
+
+        try {
+            $inputFilter->setValidationGroup($validationGroup);
+            return $inputFilter->isValid();
+        } catch (InputFilterInvalidArgumentException $ex) {
+            $pattern = '/expects a list of valid input names; "(?P<field>[^"]+)" was not found/';
+            $matched = preg_match($pattern, $ex->getMessage(), $matches);
+            if (! $matched) {
+                return new ApiProblemResponse(
+                    new ApiProblem(400, $ex)
+                );
+            }
+
+            return new ApiProblemResponse(
+                new ApiProblem(400, 'Unrecognized field "' . $matches['field'] . '"')
+            );
+        }
     }
 }
