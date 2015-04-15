@@ -11,6 +11,7 @@ use Zend\EventManager\EventManagerInterface;
 use Zend\EventManager\EventManagerAwareInterface;
 use Zend\EventManager\ListenerAggregateInterface;
 use Zend\Http\Request as HttpRequest;
+use Zend\InputFilter\CollectionInputFilter;
 use Zend\InputFilter\Exception\InvalidArgumentException as InputFilterInvalidArgumentException;
 use Zend\InputFilter\InputFilterInterface;
 use Zend\Mvc\MvcEvent;
