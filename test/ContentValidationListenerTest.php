@@ -7,6 +7,7 @@
 namespace ZFTest\ContentValidation;
 
 use PHPUnit_Framework_TestCase as TestCase;
+use Zend\EventManager\EventManager;
 use Zend\EventManager\EventManagerInterface;
 use Zend\Http\Request as HttpRequest;
 use Zend\InputFilter\Factory as InputFilterFactory;
@@ -18,6 +19,9 @@ use Zend\Stdlib\Parameters;
 use Zend\Stdlib\Request as StdlibRequest;
 use ZF\ContentNegotiation\ParameterDataContainer;
 use ZF\ContentValidation\ContentValidationListener;
+use Zend\InputFilter\InputFilterInterface;
+use ZF\ApiProblem\ApiProblemResponse;
+use ZF\ApiProblem\ApiProblem;
 
 class ContentValidationListenerTest extends TestCase
 {
@@ -55,6 +59,26 @@ class ContentValidationListenerTest extends TestCase
             'options' => array('OPTIONS'),
             'delete'  => array('DELETE'),
         );
+    }
+
+    public function testAddCustomMethods()
+    {
+        $className = 'ZF\ContentValidation\ContentValidationListener';
+        $listener = $this->getMockBuilder($className)
+                ->disableOriginalConstructor()
+                ->getMock();
+
+        $listener->expects($this->at(0))->method('addMethodWithoutBody')->with('LINK');
+        $listener->expects($this->at(1))->method('addMethodWithoutBody')->with('UNLINK');
+
+        $reflectedClass = new \ReflectionClass($className);
+        $constructor = $reflectedClass->getConstructor();
+        $constructor->invoke($listener, array(
+            'methods_without_bodies' => array(
+                'LINK',
+                'UNLINK',
+            ),
+        ));
     }
 
     /**
@@ -1048,6 +1072,292 @@ class ContentValidationListenerTest extends TestCase
     }
 
     /**
+     * @group 29
+     */
+    public function testSaveFilteredDataIntoDataContainer()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooFilter', $factory->createInputFilter(array(
+            'foo' => array(
+                'name' => 'foo',
+                'filters' => array(
+                    array('name' => 'StringTrim'),
+                ),
+            ),
+        )));
+        $listener = new ContentValidationListener(array(
+            'Foo' => array(
+                'input_filter' => 'FooFilter',
+                'use_raw_data' => false,
+            ),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array(
+            'foo' => ' abc ',
+        );
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $this->assertNull($listener->onRoute($event));
+        $this->assertEquals('abc', $dataParams->getBodyParam('foo'));
+    }
+
+    /**
+     * @group 29
+     */
+    public function testShouldSaveFilteredDataWhenRequiredEvenIfInputFilterIsNotUnknownInputsCapable()
+    {
+        $services = new ServiceManager();
+        $inputFilter = $this->getMock('Zend\InputFilter\InputFilterInterface');
+        $inputFilter->expects($this->any())
+            ->method('setData')
+            ->willReturn($this->returnValue(null));
+        $inputFilter->expects($this->any(''))
+            ->method('isValid')
+            ->will($this->returnValue(true));
+        $inputFilter->expects($this->any(''))
+            ->method('getValues')
+            ->will($this->returnValue(array('foo' => 'abc')));
+
+        $factory  = new InputFilterFactory();
+        $services->setService('FooFilter', $inputFilter);
+        $listener = new ContentValidationListener(array(
+            'Foo' => array(
+                'input_filter' => 'FooFilter',
+                'use_raw_data' => false,
+            ),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array(
+            'foo' => ' abc ',
+        );
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $this->assertNull($listener->onRoute($event));
+        $this->assertEquals('abc', $dataParams->getBodyParam('foo'));
+    }
+
+
+    /**
+     * @group 29
+     */
+    public function testSaveRawDataIntoDataContainer()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooFilter', $factory->createInputFilter(array(
+            'foo' => array(
+                'name' => 'foo',
+                'filters' => array(
+                    array('name' => 'StringTrim'),
+                ),
+            ),
+        )));
+        $listener = new ContentValidationListener(array(
+            'Foo' => array('input_filter' => 'FooFilter', 'use_raw_data' => true),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array(
+            'foo' => ' abc ',
+        );
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $listener->onRoute($event);
+        $this->assertEquals(' abc ', $dataParams->getBodyParam('foo'));
+    }
+
+    /**
+     * @group 29
+     */
+    public function testTrySaveUnknownData()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooFilter', $factory->createInputFilter(array(
+            'foo' => array(
+                'name' => 'foo',
+                'filters' => array(
+                    array('name' => 'StringTrim'),
+                ),
+            ),
+        )));
+        $listener = new ContentValidationListener(array(
+            'Foo' => array(
+                'input_filter' => 'FooFilter',
+                'allows_only_fields_in_filter' => true,
+                'use_raw_data' => false,
+            ),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array(
+            'foo' => ' abc ',
+            'unknown' => 'value'
+        );
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $result = $listener->onRoute($event);
+
+        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $result);
+        $apiProblemData = $result->getApiProblem()->toArray();
+        $this->assertEquals(422, $apiProblemData['status']);
+        $this->assertContains('Unrecognized fields', $apiProblemData['detail']);
+    }
+
+    /**
+     * @group 29
+     */
+    public function testUnknownDataMustBeMergedWithFilteredData()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooFilter', $factory->createInputFilter(array(
+            'foo' => array(
+                'name' => 'foo',
+                'filters' => array(
+                    array('name' => 'StringTrim'),
+                ),
+            ),
+        )));
+        $listener = new ContentValidationListener(array(
+            'Foo' => array(
+                'input_filter' => 'FooFilter',
+                'allows_only_fields_in_filter' => false,
+                'use_raw_data' => false,
+            ),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array(
+            'foo' => ' abc ',
+            'unknown' => 'value'
+        );
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $result = $listener->onRoute($event);
+        $this->assertNotInstanceOf('ZF\ApiProblem\ApiProblemResponse', $result);
+        $this->assertEquals('abc', $dataParams->getBodyParam('foo'));
+        $this->assertEquals('value', $dataParams->getBodyParam('unknown'));
+    }
+
+
+    /**
+     * @group 29
+     */
+    public function testSaveUnknownDataWhenEmptyInputFilter()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooFilter', $factory->createInputFilter(array()));
+        $listener = new ContentValidationListener(array(
+            'Foo' => array(
+                'input_filter' => 'FooFilter',
+                'use_raw_data' => false,
+            ),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array(
+            'foo' => ' abc ',
+            'unknown' => 'value'
+        );
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $listener->onRoute($event);
+
+        $this->assertEquals($params, $dataParams->getBodyParams());
+    }
+
+    /**
+     * @depends testFailsValidationOfPartialSetsForPatchRequestsForCollectionThatIncludeUnknownInputs
+     */
+    public function testInvalidValidationGroupOnCollectionPatchIs400Response($response)
+    {
+        $this->assertEquals(400, $response->getApiProblem()->status);
+    }
+
+    /**
      * @dataProvider listMethods
      * @group 19
      */
@@ -1152,5 +1462,189 @@ class ContentValidationListenerTest extends TestCase
         $response = $listener->onRoute($event);
         $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
         $this->assertEquals(422, $response->getApiProblem()->status);
+    }
+
+    /**
+     * @group event
+     */
+    public function testTriggeredEventBeforeValidate()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter(array(
+            'foo' => array(
+                'name' => 'foo',
+                'validators' => array(
+                    array('name' => 'Digits'),
+                ),
+            )
+        )));
+        $listener = new ContentValidationListener(array(
+            'Foo' => array('input_filter' => 'FooValidator'),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $eventManager = new EventManager();
+        $listener->setEventManager($eventManager);
+
+        $runner = $this;
+        $hasRun = false;
+        $eventManager->attach(
+            ContentValidationListener::EVENT_BEFORE_VALIDATE,
+            function (MvcEvent $e) use ($runner, &$hasRun) {
+                $runner->assertInstanceOf(
+                    'Zend\InputFilter\InputFilterInterface',
+                    $e->getParam('ZF\ContentValidation\InputFilter')
+                );
+                $hasRun = true;
+            }
+        );
+
+        $request = new HttpRequest();
+        $request->setMethod('PUT');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array_fill(0, 10, array(
+            'foo' => '123',
+        ));
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($event);
+        $this->assertTrue($hasRun);
+        $this->assertEmpty($response);
+    }
+
+    /**
+     * @group event
+     */
+    public function testTriggeredEventBeforeValidateReturnsApiProblemResponseFromApiProblem()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter(array(
+            'foo' => array(
+                'name' => 'foo',
+                'validators' => array(
+                    array('name' => 'Digits'),
+                ),
+            )
+        )));
+        $listener = new ContentValidationListener(array(
+            'Foo' => array('input_filter' => 'FooValidator'),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $eventManager = new EventManager();
+        $listener->setEventManager($eventManager);
+
+        $runner = $this;
+        $hasRun = false;
+        $eventManager->attach(
+            ContentValidationListener::EVENT_BEFORE_VALIDATE,
+            function (MvcEvent $e) use ($runner, &$hasRun) {
+                $runner->assertInstanceOf(
+                    'Zend\InputFilter\InputFilterInterface',
+                    $e->getParam('ZF\ContentValidation\InputFilter')
+                );
+                $hasRun = true;
+                return new ApiProblem(422, 'Validation failed');
+            }
+        );
+
+        $request = new HttpRequest();
+        $request->setMethod('PUT');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array_fill(0, 10, array(
+            'foo' => '123',
+        ));
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($event);
+        $this->assertTrue($hasRun);
+        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        $this->assertEquals(422, $response->getApiProblem()->status);
+        $this->assertEquals('Validation failed', $response->getApiProblem()->detail);
+    }
+
+
+    /**
+     * @group event
+     */
+    public function testTriggeredEventBeforeValidateReturnsApiProblemResponseFromCallback()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter(array(
+            'foo' => array(
+                'name' => 'foo',
+                'validators' => array(
+                    array('name' => 'Digits'),
+                ),
+            )
+        )));
+        $listener = new ContentValidationListener(array(
+            'Foo' => array('input_filter' => 'FooValidator'),
+        ), $services, array(
+            'Foo' => 'foo_id',
+        ));
+
+        $eventManager = new EventManager();
+        $listener->setEventManager($eventManager);
+
+        $runner = $this;
+        $hasRun = false;
+        $eventManager->attach(
+            ContentValidationListener::EVENT_BEFORE_VALIDATE,
+            function (MvcEvent $e) use ($runner, &$hasRun) {
+                $runner->assertInstanceOf(
+                    'Zend\InputFilter\InputFilterInterface',
+                    $e->getParam('ZF\ContentValidation\InputFilter')
+                );
+                $hasRun = true;
+                return new ApiProblemResponse(new ApiProblem(422, 'Validation failed'));
+            }
+        );
+
+        $request = new HttpRequest();
+        $request->setMethod('PUT');
+
+        $matches = new RouteMatch(array('controller' => 'Foo'));
+
+        $params = array_fill(0, 10, array(
+            'foo' => '123',
+        ));
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($event);
+        $this->assertTrue($hasRun);
+        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        $this->assertEquals(422, $response->getApiProblem()->status);
+        $this->assertEquals('Validation failed', $response->getApiProblem()->detail);
     }
 }
