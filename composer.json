@@ -21,8 +21,8 @@
     ],
     "extra": {
         "branch-alias": {
-            "dev-master": "1.0-dev",
-            "dev-develop": "1.1-dev"
+            "dev-master": "1.1-dev",
+            "dev-develop": "1.2-dev"
         }
     },
     "require": {
@@ -30,7 +30,7 @@
         "zendframework/zend-eventmanager": "~2.3",
         "zendframework/zend-filter": "~2.3",
         "zendframework/zend-http": "~2.3",
-        "zendframework/zend-inputfilter": "~2.3",
+        "zendframework/zend-inputfilter": "~2.4",
         "zendframework/zend-mvc": "~2.3",
         "zendframework/zend-servicemanager": "~2.3",
         "zendframework/zend-stdlib": "~2.3",
