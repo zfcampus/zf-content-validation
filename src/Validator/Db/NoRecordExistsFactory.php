@@ -17,7 +17,7 @@ class NoRecordExistsFactory implements FactoryInterface, MutableCreationOptionsI
     /**
      * @var array
      */
-    protected $options = array();
+    protected $options = [];
 
     /**
      * Set options property
@@ -38,7 +38,7 @@ class NoRecordExistsFactory implements FactoryInterface, MutableCreationOptionsI
         if (isset($this->options['adapter'])) {
             return new NoRecordExists(ArrayUtils::merge(
                 $this->options,
-                array('adapter' => $validators->getServiceLocator()->get($this->options['adapter']))
+                ['adapter' => $validators->getServiceLocator()->get($this->options['adapter'])]
             ));
         }
 
