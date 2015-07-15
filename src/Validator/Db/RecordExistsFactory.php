@@ -17,7 +17,7 @@ class RecordExistsFactory implements FactoryInterface, MutableCreationOptionsInt
     /**
      * @var array
      */
-    protected $options = array();
+    protected $options = [];
 
     /**
      * Set options property
@@ -38,7 +38,7 @@ class RecordExistsFactory implements FactoryInterface, MutableCreationOptionsInt
         if (isset($this->options['adapter'])) {
             return new RecordExists(ArrayUtils::merge(
                 $this->options,
-                array('adapter' => $validators->getServiceLocator()->get($this->options['adapter']))
+                ['adapter' => $validators->getServiceLocator()->get($this->options['adapter'])]
             ));
         }
 

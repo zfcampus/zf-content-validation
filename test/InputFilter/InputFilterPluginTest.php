@@ -28,7 +28,7 @@ class InputFilterPluginTest extends TestCase
 
     public function testInvalidTypeInEventInputFilterParamCausesPluginToYieldNull()
     {
-        $this->event->setParam('ZF\ContentValidation\InputFilter', (object) array('foo' => 'bar'));
+        $this->event->setParam('ZF\ContentValidation\InputFilter', (object) ['foo' => 'bar']);
         $this->assertNull($this->plugin->__invoke());
     }
 

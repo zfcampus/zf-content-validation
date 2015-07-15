@@ -17,8 +17,8 @@ class ContentValidationListenerFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $services)
     {
-        $contentValidationConfig = array();
-        $restServices            = array();
+        $contentValidationConfig = [];
+        $restServices            = [];
 
         if ($services->has('Config')) {
             $config = $services->get('Config');
@@ -46,7 +46,7 @@ class ContentValidationListenerFactory implements FactoryInterface
      */
     protected function getRestServicesFromConfig(array $config)
     {
-        $restServices = array();
+        $restServices = [];
         if (!isset($config['zf-rest'])) {
             return $restServices;
         }
