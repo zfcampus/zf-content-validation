@@ -32,7 +32,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
     /**
      * @var array
      */
-    protected $config = array();
+    protected $config = [];
 
     protected $events;
 
@@ -46,22 +46,22 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
      *
      * @var array
      */
-    protected $inputFilters = array();
+    protected $inputFilters = [];
 
     /**
      * @var CallbackHandler[]
      */
-    protected $listeners = array();
+    protected $listeners = [];
 
     /**
      * @var array
      */
-    protected $methodsWithoutBodies = array(
+    protected $methodsWithoutBodies = [
         'GET',
         'HEAD',
         'OPTIONS',
         'DELETE',
-    );
+    ];
 
     /**
      * Map of REST controllers => route identifier names
@@ -77,9 +77,9 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
      * @param null|ServiceLocatorInterface $inputFilterManager
      */
     public function __construct(
-        array $config = array(),
+        array $config = [],
         ServiceLocatorInterface $inputFilterManager = null,
-        array $restControllers = array()
+        array $restControllers = []
     ) {
         $this->config               = $config;
         $this->inputFilterManager   = $inputFilterManager;
@@ -103,11 +103,11 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
      */
     public function setEventManager(EventManagerInterface $events)
     {
-        $events->addIdentifiers(array(
+        $events->addIdentifiers([
             get_class($this),
             __CLASS__,
             self::EVENT_BEFORE_VALIDATE
-        ));
+        ]);
         $this->events = $events;
 
         return $this;
@@ -136,7 +136,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
     public function attach(EventManagerInterface $events, $priority = 1)
     {
         // trigger after authentication/authorization and content negotiation
-        $this->listeners[] = $events->attach(MvcEvent::EVENT_ROUTE, array($this, 'onRoute'), -650);
+        $this->listeners[] = $events->attach(MvcEvent::EVENT_ROUTE, [$this, 'onRoute'], -650);
     }
 
     /**
@@ -216,7 +216,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         }
         $data = $dataContainer->getBodyParams();
         if (null === $data || '' === $data) {
-            $data = array();
+            $data = [];
         }
 
         $isCollection = $this->isCollection($controllerService, $data, $routeMatches, $request);
@@ -268,9 +268,9 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         // Invalid? Return a 422 response.
         if (false === $status) {
             return new ApiProblemResponse(
-                new ApiProblem(422, 'Failed Validation', null, null, array(
+                new ApiProblem(422, 'Failed Validation', null, null, [
                     'validation_messages' => $inputFilter->getMessages(),
-                ))
+                ])
             );
         }
 
