@@ -656,16 +656,25 @@ class ContentValidationListenerTest extends TestCase
 
         $files = new Parameters([
             'foo' => [
-                'name' => 'foo.txt',
-                'type' => 'text/plain',
-                'size' => 1,
-                'tmp_name' => '/tmp/foo.txt',
-                'error' => UPLOAD_ERR_OK,
+                0 => [
+                    'file' => [
+                        'name' => 'foo.txt',
+                        'type' => 'text/plain',
+                        'size' => 1,
+                        'tmp_name' => '/tmp/foo.txt',
+                        'error' => UPLOAD_ERR_OK,
+                    ],
+                ],
             ],
         ]);
         $data = [
             'bar' => 'baz',
             'quz' => 'quuz',
+            'foo' => [
+                0 => [
+                    'bar' => 'baz',
+                ],
+            ],
         ];
         $dataContainer = new ParameterDataContainer();
         $dataContainer->setBodyParams($data);
