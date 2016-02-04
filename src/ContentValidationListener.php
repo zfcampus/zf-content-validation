@@ -254,6 +254,11 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
             return $last;
         }
 
+        if($isCollection && in_array($method, $this->methodsWithoutBodies))
+        {
+            $data = [$data];
+        }
+
         $inputFilter->setData($data);
 
         $status = ($request->isPatch())
