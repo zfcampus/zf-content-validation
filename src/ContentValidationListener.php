@@ -254,8 +254,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
             return $last;
         }
 
-        if($isCollection && in_array($method, $this->methodsWithoutBodies))
-        {
+        if ($isCollection && in_array($method, $this->methodsWithoutBodies)) {
             $data = [$data];
         }
 

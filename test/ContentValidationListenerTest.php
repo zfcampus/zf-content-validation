@@ -175,7 +175,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('GET');
 
-        $matches = new RouteMatch(['controller' => 'Foo'],['foo_id' => 3]);
+        $matches = new RouteMatch(['controller' => 'Foo'], ['foo_id' => 3]);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setQueryParams([
