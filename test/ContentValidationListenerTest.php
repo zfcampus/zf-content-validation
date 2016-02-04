@@ -97,6 +97,52 @@ class ContentValidationListenerTest extends TestCase
         $this->assertNull($event->getResponse());
     }
 
+    public function testDoesNotReturnEarlyIfRequestMethodWithoutBodyHasInputFilter()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['GET' => 'FooValidator'],
+        ], $services);
+
+        $request = new HttpRequest();
+        $request->setMethod('GET');
+
+        $matches = new RouteMatch(['controller' => 'Foo']);
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setQueryParams([
+            'foo' => 'abc',
+            'bar' => 123,
+        ]);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($event);
+        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        return $response;
+    }
+
     public function testReturnsEarlyIfNoRouteMatchesPresent()
     {
         $listener = new ContentValidationListener();
