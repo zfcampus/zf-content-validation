@@ -186,7 +186,8 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
             return;
         }
 
-        $inputFilterService = $this->getInputFilterService($controllerService, $request->getMethod());
+        $method = $request->getMethod();
+        $inputFilterService = $this->getInputFilterService($controllerService, $method);
         if (! $inputFilterService) {
             return;
         }
@@ -209,7 +210,10 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
                 )
             );
         }
-        $data = $dataContainer->getBodyParams();
+
+        $data = in_array($method, $this->methodsWithoutBodies)
+            ? $dataContainer->getQueryParams() : $dataContainer->getBodyParams();
+
         if (null === $data || '' === $data) {
             $data = [];
         }

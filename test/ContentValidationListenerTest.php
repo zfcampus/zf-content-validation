@@ -140,6 +140,10 @@ class ContentValidationListenerTest extends TestCase
 
         $response = $listener->onRoute($event);
         $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        $this->assertNotContains('Value is required and can\'t be empty', $response->getBody());
+        $this->assertContains('The input must contain only digits', $response->getBody());
+        $this->assertContains('The input does not match against pattern \'/^[a-z]+/i\'', $response->getBody());
+
         return $response;
     }
 
