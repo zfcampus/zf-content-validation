@@ -1418,6 +1418,55 @@ class ContentValidationListenerTest extends TestCase
         $this->assertEquals('value', $dataParams->getBodyParam('unknown'));
     }
 
+    /**
+     * @group 65
+     */
+    public function testUseRawAndAllowOnlyFieldsInFilterData()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooFilter', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'filters' => [
+                    ['name' => 'StringTrim'],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => [
+                'input_filter' => 'FooFilter',
+                'allows_only_fields_in_filter' => true,
+                'use_raw_data' => true,
+            ],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = new RouteMatch(['controller' => 'Foo']);
+
+        $params = [
+            'foo' => ' abc ',
+            'unknown' => 'value'
+        ];
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        /** @var \ZF\ApiProblem\ApiProblemResponse $result */
+        $result = $listener->onRoute($event);
+        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $result);
+        $this->assertEquals(422, $result->getApiProblem()->status);
+        $this->assertEquals('Unrecognized fields: unknown', $result->getApiProblem()->detail);
+    }
 
     /**
      * @group 29
