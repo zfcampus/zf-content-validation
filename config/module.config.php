@@ -4,13 +4,13 @@
  * @copyright Copyright (c) 2014 Zend Technologies USA Inc. (http://www.zend.com)
  */
 
-return array(
-    'controller_plugins' => array(
-        'invokables' => array(
+return [
+    'controller_plugins' => [
+        'invokables' => [
             'getinputfilter' => 'ZF\ContentValidation\InputFilter\InputFilterPlugin',
-        ),
-    ),
-    'input_filter_specs' => array(
+        ],
+    ],
+    'input_filter_specs' => [
         /*
          * An array of service name => config pairs.
          *
@@ -20,25 +20,25 @@ return array(
          *
          * - http://zf2.readthedocs.org/en/latest/modules/zend.input-filter.intro.html
          */
-    ),
-    'input_filters' => array(
-        'abstract_factories' => array(
+    ],
+    'input_filters' => [
+        'abstract_factories' => [
             'Zend\InputFilter\InputFilterAbstractServiceFactory',
-        ),
-    ),
-    'service_manager' => array(
-        'factories' => array(
+        ],
+    ],
+    'service_manager' => [
+        'factories' => [
             'ZF\ContentValidation\ContentValidationListener' => 'ZF\ContentValidation\ContentValidationListenerFactory',
-        ),
-    ),
-    'validators' => array(
-        'factories' => array(
+        ],
+    ],
+    'validators' => [
+        'factories' => [
             'ZF\ContentValidation\Validator\DbRecordExists' => 'ZF\ContentValidation\Validator\Db\RecordExistsFactory',
             'ZF\ContentValidation\Validator\DbNoRecordExists' => 'ZF\ContentValidation\Validator\Db\NoRecordExistsFactory',
-        ),
-    ),
-    'zf-content-validation' => array(
-        'methods_without_bodies' => array(),
+        ],
+    ],
+    'zf-content-validation' => [
+        'methods_without_bodies' => [],
         /*
          * An array of controller service name => config pairs.
          *
@@ -59,7 +59,7 @@ return array(
          * Additionally, you can define either of the following two keys to
          * further define application validation behavior:
          *
-         * - use_raw_data: if NOT present, raw data is ALWAYS injected into 
+         * - use_raw_data: if NOT present, raw data is ALWAYS injected into
          *   the "BodyParams" container (defined by zf-content-negotiation).
          *   If this key is present and a boolean false, then the validated,
          *   filtered data from the input filter will be used instead.
@@ -69,5 +69,5 @@ return array(
          *   not additional fields present in the payload will be merged
          *   with the filtered data.
          */
-    ),
-);
+    ],
+];
