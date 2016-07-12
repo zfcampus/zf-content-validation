@@ -282,25 +282,20 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         //   that was the default experience starting in 1.0.
         // - If the flag is present AND is boolean true, that is also
         //   an indicator that the raw data should be present.
-        if (! isset($this->config[$controllerService]['use_raw_data'])
-            || (isset($this->config[$controllerService]['use_raw_data'])
-                && $this->config[$controllerService]['use_raw_data'] === true)
+        if (!$this->useRawData($controllerService)) {
+            $data = $inputFilter->getValues();
+        }
+
+        // If we don't have an instance of UnknownInputsCapableInterface, or no
+        // unknown data is in the input filter, at this point we can just
+        // set the current data into the data container.
+        if (! $inputFilter instanceof UnknownInputsCapableInterface
+            || ! $inputFilter->hasUnknown()
         ) {
             $dataContainer->setBodyParams($data);
             return;
         }
 
-        // If we don't have an instance of UnknownInputsCapableInterface, or no
-        // unknown data is in the input filter, at this point we can just
-        // set the input filter values directly into the data container.
-        if (! $inputFilter instanceof UnknownInputsCapableInterface
-            || ! $inputFilter->hasUnknown()
-        ) {
-            $dataContainer->setBodyParams($inputFilter->getValues());
-            return;
-        }
-
-        $bodyParams = $inputFilter->getValues();
         $unknown    = $inputFilter->getUnknown();
 
         if ($this->allowsOnlyFieldsInFilter($controllerService)) {
@@ -310,8 +305,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
 
             return new ApiProblemResponse($problem);
         }
-
-        $dataContainer->setBodyParams(array_merge($bodyParams, $unknown));
+        $dataContainer->setBodyParams(array_merge($data, $unknown));
     }
 
     /**
@@ -334,6 +328,21 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
             return true === $this->config[$controllerService]['allows_only_fields_in_filter'];
         }
 
+        return false;
+    }
+
+    /**
+     * @param $controllerService
+     * @return bool
+     */
+    protected function useRawData($controllerService)
+    {
+        if (! isset($this->config[$controllerService]['use_raw_data'])
+            || (isset($this->config[$controllerService]['use_raw_data'])
+                && $this->config[$controllerService]['use_raw_data'] === true)
+        ) {
+            return true;
+        }
         return false;
     }
 
