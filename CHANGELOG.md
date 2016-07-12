@@ -20,7 +20,11 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Fixed
 
-- Nothing.
+- [#65](https://github.com/zfcampus/zf-content-validation/pull/65) adds the
+  ability to specify the flags `allows_only_fields_in_filter` and `use_raw_data`
+  in combination to ensure that raw data will not contain any keys not defined
+  in the input filters. (Previously, `allows_only_fields_in_filter` was ignored
+  when `use_raw_data` was specified.)
 
 ## 1.2.1 - TBD
 
