@@ -98,6 +98,106 @@ class ContentValidationListenerTest extends TestCase
         $this->assertNull($event->getResponse());
     }
 
+    public function testReturnsApiProblemResponseIfCollectionRequestWithoutBodyIsInvalid()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['GET' => 'FooValidator'],
+        ], $services);
+
+        $request = new HttpRequest();
+        $request->setMethod('GET');
+
+        $matches = new RouteMatch(['controller' => 'Foo']);
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setQueryParams([
+            'foo' => 'abc',
+            'bar' => 123,
+        ]);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($event);
+        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        $this->assertNotContains('Value is required and can\'t be empty', $response->getBody());
+        $this->assertContains('The input must contain only digits', $response->getBody());
+        $this->assertContains('The input does not match against pattern \'/^[a-z]+/i\'', $response->getBody());
+
+        return $response;
+    }
+
+    public function testReturnsApiProblemResponseIfEntityRequestWithoutBodyIsInvalid()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['GET' => 'FooValidator'],
+        ], $services, ['Foo' => 'foo_id']);
+
+        $request = new HttpRequest();
+        $request->setMethod('GET');
+
+        $matches = new RouteMatch(['controller' => 'Foo'], ['foo_id' => 3]);
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setQueryParams([
+            'foo' => 'abc',
+            'bar' => 123,
+        ]);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($event);
+        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        $this->assertNotContains('Value is required and can\'t be empty', $response->getBody());
+        $this->assertContains('The input must contain only digits', $response->getBody());
+        $this->assertContains('The input does not match against pattern \'/^[a-z]+/i\'', $response->getBody());
+
+        return $response;
+    }
+
     public function testReturnsEarlyIfNoRouteMatchesPresent()
     {
         $listener = new ContentValidationListener();
