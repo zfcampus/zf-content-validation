@@ -177,11 +177,6 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
             return;
         }
 
-        $method = $request->getMethod();
-        if (in_array($method, $this->methodsWithoutBodies)) {
-            return;
-        }
-
         $routeMatches = $e->getRouteMatch();
         if (! $routeMatches instanceof RouteMatch) {
             return;
@@ -191,6 +186,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
             return;
         }
 
+        $method = $request->getMethod();
         $inputFilterService = $this->getInputFilterService($controllerService, $method);
         if (! $inputFilterService) {
             return;
@@ -214,7 +210,10 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
                 )
             );
         }
-        $data = $dataContainer->getBodyParams();
+
+        $data = in_array($method, $this->methodsWithoutBodies)
+            ? $dataContainer->getQueryParams() : $dataContainer->getBodyParams();
+
         if (null === $data || '' === $data) {
             $data = [];
         }
@@ -253,6 +252,10 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
 
         if ($last instanceof ApiProblemResponse) {
             return $last;
+        }
+
+        if ($isCollection && in_array($method, $this->methodsWithoutBodies)) {
+            $data = [$data];
         }
 
         $inputFilter->setData($data);
@@ -350,6 +353,10 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
     {
         if (isset($this->config[$controllerService][$method])) {
             return $this->config[$controllerService][$method];
+        }
+
+        if (in_array($method, $this->methodsWithoutBodies)) {
+            return false;
         }
 
         if (isset($this->config[$controllerService]['input_filter'])) {
