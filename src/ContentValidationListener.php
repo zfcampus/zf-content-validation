@@ -225,7 +225,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         if (! $isCollection && 0 < count($files)) {
             // File uploads are not validated for collections; impossible to
             // match file fields to discrete sets
-            $data = array_merge_recursive($data, $files->toArray());
+            $data = ArrayUtils::merge($data, $files->toArray(), true);
         }
 
         $inputFilter = $this->getInputFilter($inputFilterService);
