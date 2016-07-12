@@ -26,7 +26,7 @@ All notable changes to this project will be documented in this file, in reverse 
   in the input filters. (Previously, `allows_only_fields_in_filter` was ignored
   when `use_raw_data` was specified.)
 
-## 1.2.1 - TBD
+## 1.2.1 - 2016-07-12
 
 ### Added
 
