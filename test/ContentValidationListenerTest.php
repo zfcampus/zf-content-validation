@@ -15,6 +15,7 @@ use Zend\InputFilter\InputFilter;
 use Zend\Mvc\MvcEvent;
 use Zend\Mvc\Router\RouteMatch;
 use Zend\ServiceManager\ServiceManager;
+use Zend\Stdlib\ArrayUtils;
 use Zend\Stdlib\Parameters;
 use Zend\Stdlib\Request as StdlibRequest;
 use ZF\ContentNegotiation\ParameterDataContainer;
@@ -655,16 +656,25 @@ class ContentValidationListenerTest extends TestCase
 
         $files = new Parameters([
             'foo' => [
-                'name' => 'foo.txt',
-                'type' => 'text/plain',
-                'size' => 1,
-                'tmp_name' => '/tmp/foo.txt',
-                'error' => UPLOAD_ERR_OK,
+                0 => [
+                    'file' => [
+                        'name' => 'foo.txt',
+                        'type' => 'text/plain',
+                        'size' => 1,
+                        'tmp_name' => '/tmp/foo.txt',
+                        'error' => UPLOAD_ERR_OK,
+                    ],
+                ],
             ],
         ]);
         $data = [
             'bar' => 'baz',
             'quz' => 'quuz',
+            'foo' => [
+                0 => [
+                    'bar' => 'baz',
+                ],
+            ],
         ];
         $dataContainer = new ParameterDataContainer();
         $dataContainer->setBodyParams($data);
@@ -686,7 +696,7 @@ class ContentValidationListenerTest extends TestCase
             ->will($this->returnValue(true));
         $validator->expects($this->once())
             ->method('setData')
-            ->with($this->equalTo(array_merge_recursive($data, $files->toArray())));
+            ->with($this->equalTo(ArrayUtils::merge($data, $files->toArray(), true)));
         $validator->expects($this->once())
             ->method('isValid')
             ->will($this->returnValue(true));
