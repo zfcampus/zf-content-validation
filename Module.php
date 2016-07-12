@@ -6,19 +6,21 @@
 
 namespace ZF\ContentValidation;
 
+use Zend\Loader\StandardAutoloader;
 use Zend\Mvc\MvcEvent;
+use ZF\ContentValidation\ContentValidationListener;
 
 class Module
 {
     public function getAutoloaderConfig()
     {
-        return array(
-            'Zend\Loader\StandardAutoloader' => array(
-                'namespaces' => array(
+        return [
+            StandardAutoloader::class => [
+                'namespaces' => [
                     __NAMESPACE__ => __DIR__ . '/src/',
-                ),
-            ),
-        );
+                ],
+            ],
+        ];
     }
 
     public function getConfig()
@@ -32,6 +34,6 @@ class Module
         $events   = $app->getEventManager();
         $services = $app->getServiceManager();
 
-        $events->attach($services->get('ZF\ContentValidation\ContentValidationListener'));
+        $events->attach($services->get(ContentValidationListener::class));
     }
 }
