@@ -282,7 +282,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         //   that was the default experience starting in 1.0.
         // - If the flag is present AND is boolean true, that is also
         //   an indicator that the raw data should be present.
-        if (!$this->useRawData($controllerService)) {
+        if (! $this->useRawData($controllerService)) {
             $data = $inputFilter->getValues();
         }
 

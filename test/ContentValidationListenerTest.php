@@ -1418,7 +1418,9 @@ class ContentValidationListenerTest extends TestCase
         $this->assertEquals('value', $dataParams->getBodyParam('unknown'));
     }
 
-
+    /**
+     * @group 65
+     */
     public function testUseRawAndAllowOnlyFieldsInFilterData()
     {
         $services = new ServiceManager();
