@@ -407,11 +407,11 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
      *
      * @param string $serviceName
      * @param array $data
-     * @param RouteMatch $matches
+     * @param RouteMatch|V2RouteMatch $matches
      * @param HttpRequest $request
      * @return bool
      */
-    protected function isCollection($serviceName, $data, RouteMatch $matches, HttpRequest $request)
+    protected function isCollection($serviceName, $data, $matches, HttpRequest $request)
     {
         if (! array_key_exists($serviceName, $this->restControllers)) {
             return false;
