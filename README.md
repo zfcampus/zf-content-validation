@@ -6,7 +6,7 @@ ZF Content Validation
 Introduction
 ------------
 
-ZF2 Module for automating validation of incoming input.
+Zend Framework module for automating validation of incoming input.
 
 Allows the following:
 
@@ -25,14 +25,14 @@ Installation
 Run the following `composer` command:
 
 ```console
-$ composer require "zfcampus/zf-content-validation:~1.0-dev"
+$ composer require zfcampus/zf-content-validation
 ```
 
 Alternately, manually add the following to your `composer.json`, in the `require` section:
 
 ```javascript
 "require": {
-    "zfcampus/zf-content-validation": "~1.0-dev"
+    "zfcampus/zf-content-validation": "^1.3"
 }
 ```
 
@@ -42,14 +42,14 @@ Finally, add the module name to your project's `config/application.config.php` u
 key:
 
 ```php
-return array(
+return [
     /* ... */
-    'modules' => array(
+    'modules' => [
         /* ... */
         'ZF\ContentValidation',
-    ),
+    ],
     /* ... */
-);
+];
 ```
 
 Configuration
@@ -72,12 +72,12 @@ filter is configured for the current HTTP request method.
 Example where there is a default as well as a POST filter:
 
 ```php
-'zf-content-validation' => array(
-    'Application\Controller\HelloWorld' => array(
+'zf-content-validation' => [
+    'Application\Controller\HelloWorld' => [
         'input_filter' => 'Application\Controller\HelloWorld\Validator',
         'POST' => 'Application\Controller\HelloWorld\CreationValidator',
-    ),
-),
+    ],
+],
 ```
 
 In the above example, the `Application\Controller\HelloWorld\Validator` service will be selected for
@@ -94,6 +94,17 @@ behavior:
   flag will define whether or not additional fields present in the payload will be merged with the
   filtered data.
 
+> ### Validating GET requests
+>
+> Since 1.3.0.
+>
+> Starting in 1.3.0, you may also specify `GET` as an HTTP method, mapping it to
+> an input filter in order to validate your query parameters. Configuration is
+> exactly as described in the above section.
+>
+> This feature is only available when manually configuring your API; it is not
+> exposed in the Admin UI.
+
 #### input_filter_spec
 
 `input_filter_spec` is for configuration-driven creation of input filters.  The keys for this array
@@ -105,23 +116,23 @@ filters](http://zf2.readthedocs.org/en/latest/modules/zend.input-filter.intro.ht
 Example:
 
 ```php
-'input_filter_specs' => array(
-    'Application\Controller\HelloWorldGet' => array(
-        0 => array(
+'input_filter_specs' => [
+    'Application\Controller\HelloWorldGet' => [
+        0 => [
             'name' => 'name',
             'required' => true,
-            'filters' => array(
-                0 => array(
+            'filters' => [
+                0 => [
                     'name' => 'Zend\Filter\StringTrim',
-                    'options' => array(),
-                ),
-            ),
-            'validators' => array(),
+                    'options' => [],
+                ],
+            ],
+            'validators' => [],
             'description' => 'Hello to name',
             'allow_empty' => false,
             'continue_if_empty' => false,
-        ),
-    ),
+        ],
+    ],
 ```
 
 ### System Configuration
@@ -129,22 +140,39 @@ Example:
 The following configuration is defined by the module in order to function within a ZF2 application.
 
 ```php
-'input_filters' => array(
-    'abstract_factories' => array(
-        'ZF\ContentValidation\InputFilter\InputFilterAbstractServiceFactory',
-    ),
-),
-'service_manager' => array(
-    'factories' => array(
-        'ZF\ContentValidation\ContentValidationListener' => 'ZF\ContentValidation\ContentValidationListenerFactory',
-    ),
-),
-'validators' => array(
-    'factories' => array(
-        'ZF\ContentValidation\Validator\DbRecordExists' => 'ZF\ContentValidation\Validator\Db\RecordExistsFactory',
-        'ZF\ContentValidation\Validator\DbNoRecordExists' => 'ZF\ContentValidation\Validator\Db\NoRecordExistsFactory',
-    ),
-),
+namespace ZF\ContentValidation;
+
+use Zend\InputFiler\InputFilterAbstractServiceFactory;
+use Zend\ServiceManager\Factory\InvokableFactory;
+
+return [
+    'controller_plugins' => [
+        'aliases' => [
+            'getinputfilter' => InputFilter\InputFilterPlugin::class,
+            'getInputfilter' => InputFilter\InputFilterPlugin::class,
+            'getInputFilter' => InputFilter\InputFilterPlugin::class,
+        ],
+        'factories' => [
+            InputFilter\InputFilterPlugin::class => InvokableFactory::class,
+        ],
+    ],
+    'input_filters' => [
+        'abstract_factories' => [
+            InputFilterAbstractServiceFactory::class,
+        ],
+    ],
+    'service_manager' => [
+        'factories' => [
+            ContentValidationListener::class => ContentValidationListenerFactory::class,
+        ],
+    ],
+    'validators' => [
+        'factories' => [
+            Validator\DbRecordExists::class => Validator\Db\RecordExistsFactory::class,
+            Validator\DbNoRecordExists::class => Validator\Db\NoRecordExistsFactory::class,
+        ],
+    ],
+];
 ```
 
 ZF2 Events
@@ -176,7 +204,7 @@ This plugin is available to Zend Framework 2 controllers. When invoked (`$this->
 
 ### Service
 
-#### ZF\ContentValidation\InputFilter\InputFilterAbstractServiceFactory
+#### Zend\InputFilter\InputFilterAbstractServiceFactory
 
 This abstract factory is responsible for creating and returning an appropriate input filter given
 a name and the configuration from the top-level key `input_filter_specs`. It is registered with

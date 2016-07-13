@@ -1,18 +1,26 @@
 <?php
+/**
+ * @license   http://opensource.org/licenses/BSD-3-Clause BSD-3-Clause
+ * @copyright Copyright (c) 2014-2016 Zend Technologies USA Inc. (http://www.zend.com)
+ */
 
 namespace ZFTest\ContentValidation\InputFilter;
 
 use PHPUnit_Framework_TestCase as TestCase;
+use Zend\InputFilter\InputFilterInterface;
+use Zend\Mvc\Controller\AbstractController;
 use Zend\Mvc\MvcEvent;
 use ZF\ContentValidation\InputFilter\InputFilterPlugin;
 
 class InputFilterPluginTest extends TestCase
 {
-    public function setUp()
+    protected function setUp()
     {
+        parent::setUp();
+
         $this->event = $event = new MvcEvent();
 
-        $controller = $this->getMock('Zend\Mvc\Controller\AbstractController');
+        $controller = $this->getMockBuilder(AbstractController::class)->getMock();
         $controller->expects($this->any())
             ->method('getEvent')
             ->will($this->returnValue($event));
@@ -34,7 +42,7 @@ class InputFilterPluginTest extends TestCase
 
     public function testValidInputFilterInEventIsReturnedByPlugin()
     {
-        $inputFilter = $this->getMock('Zend\InputFilter\InputFilterInterface');
+        $inputFilter = $this->getMockBuilder(InputFilterInterface::class)->getMock();
         $this->event->setParam('ZF\ContentValidation\InputFilter', $inputFilter);
         $this->assertSame($inputFilter, $this->plugin->__invoke());
     }

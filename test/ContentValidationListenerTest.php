@@ -1,7 +1,7 @@
 <?php
 /**
  * @license   http://opensource.org/licenses/BSD-3-Clause BSD-3-Clause
- * @copyright Copyright (c) 2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2014-2016 Zend Technologies USA Inc. (http://www.zend.com)
  */
 
 namespace ZFTest\ContentValidation;
@@ -12,24 +12,31 @@ use Zend\EventManager\EventManagerInterface;
 use Zend\Http\Request as HttpRequest;
 use Zend\InputFilter\Factory as InputFilterFactory;
 use Zend\InputFilter\InputFilter;
+use Zend\InputFilter\InputFilterInterface;
 use Zend\Mvc\MvcEvent;
-use Zend\Mvc\Router\RouteMatch;
+use Zend\Mvc\Router\RouteMatch as V2RouteMatch;
+use Zend\Router\RouteMatch;
 use Zend\ServiceManager\ServiceManager;
 use Zend\Stdlib\ArrayUtils;
 use Zend\Stdlib\Parameters;
 use Zend\Stdlib\Request as StdlibRequest;
+use ZF\ApiProblem\ApiProblem;
+use ZF\ApiProblem\ApiProblemResponse;
 use ZF\ContentNegotiation\ParameterDataContainer;
 use ZF\ContentValidation\ContentValidationListener;
-use Zend\InputFilter\InputFilterInterface;
-use ZF\ApiProblem\ApiProblemResponse;
-use ZF\ApiProblem\ApiProblem;
 
 class ContentValidationListenerTest extends TestCase
 {
+    public function createRouteMatch(array $params = [])
+    {
+        $class = class_exists(V2RouteMatch::class) ? V2RouteMatch::class : RouteMatch::class;
+        return new $class($params);
+    }
+
     public function testAttachesToRouteEventAtLowPriority()
     {
         $listener = new ContentValidationListener();
-        $events = $this->getMock('Zend\EventManager\EventManagerInterface');
+        $events = $this->getMockBuilder(EventManagerInterface::class)->getMock();
         $events->expects($this->once())
             ->method('attach')
             ->with(
@@ -64,7 +71,7 @@ class ContentValidationListenerTest extends TestCase
 
     public function testAddCustomMethods()
     {
-        $className = 'ZF\ContentValidation\ContentValidationListener';
+        $className = ContentValidationListener::class;
         $listener = $this->getMockBuilder($className)
                 ->disableOriginalConstructor()
                 ->getMock();
@@ -98,6 +105,106 @@ class ContentValidationListenerTest extends TestCase
         $this->assertNull($event->getResponse());
     }
 
+    public function testReturnsApiProblemResponseIfCollectionRequestWithoutBodyIsInvalid()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['GET' => 'FooValidator'],
+        ], $services);
+
+        $request = new HttpRequest();
+        $request->setMethod('GET');
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setQueryParams([
+            'foo' => 'abc',
+            'bar' => 123,
+        ]);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($event);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
+        $this->assertNotContains('Value is required and can\'t be empty', $response->getBody());
+        $this->assertContains('The input must contain only digits', $response->getBody());
+        $this->assertContains('The input does not match against pattern \'/^[a-z]+/i\'', $response->getBody());
+
+        return $response;
+    }
+
+    public function testReturnsApiProblemResponseIfEntityRequestWithoutBodyIsInvalid()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['GET' => 'FooValidator'],
+        ], $services, ['Foo' => 'foo_id']);
+
+        $request = new HttpRequest();
+        $request->setMethod('GET');
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo', 'foo_id' => 3]);
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setQueryParams([
+            'foo' => 'abc',
+            'bar' => 123,
+        ]);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($event);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
+        $this->assertNotContains('Value is required and can\'t be empty', $response->getBody());
+        $this->assertContains('The input must contain only digits', $response->getBody());
+        $this->assertContains('The input does not match against pattern \'/^[a-z]+/i\'', $response->getBody());
+
+        return $response;
+    }
+
     public function testReturnsEarlyIfNoRouteMatchesPresent()
     {
         $listener = new ContentValidationListener();
@@ -117,7 +224,7 @@ class ContentValidationListenerTest extends TestCase
 
         $request = new HttpRequest();
         $request->setMethod('POST');
-        $matches = new RouteMatch([]);
+        $matches = $this->createRouteMatch([]);
         $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
@@ -132,7 +239,7 @@ class ContentValidationListenerTest extends TestCase
 
         $request = new HttpRequest();
         $request->setMethod('POST');
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
         $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
@@ -151,13 +258,13 @@ class ContentValidationListenerTest extends TestCase
 
         $request = new HttpRequest();
         $request->setMethod('POST');
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
         $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
 
         $response = $listener->onRoute($event);
-        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
         return $response;
     }
 
@@ -179,14 +286,14 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
 
         $response = $listener->onRoute($event);
-        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
         $this->assertEquals(500, $response->getApiProblem()->status);
     }
 
@@ -218,7 +325,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams([
@@ -264,7 +371,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams([
@@ -278,7 +385,7 @@ class ContentValidationListenerTest extends TestCase
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
 
         $response = $listener->onRoute($event);
-        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
         return $response;
     }
 
@@ -333,7 +440,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams([
@@ -346,7 +453,7 @@ class ContentValidationListenerTest extends TestCase
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
 
         $response = $listener->onRoute($event);
-        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
         return $response;
     }
 
@@ -378,7 +485,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('PATCH');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams([
@@ -421,7 +528,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('PATCH');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams([
@@ -435,7 +542,7 @@ class ContentValidationListenerTest extends TestCase
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
 
         $response = $listener->onRoute($event);
-        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
         return $response;
     }
 
@@ -453,7 +560,7 @@ class ContentValidationListenerTest extends TestCase
     public function testInputFilterIsInjectedIntoMvcEvent($event)
     {
         $inputFilter = $event->getParam('ZF\ContentValidation\InputFilter');
-        $this->assertInstanceOf('Zend\InputFilter\InputFilter', $inputFilter);
+        $this->assertInstanceOf(InputFilter::class, $inputFilter);
     }
 
     /**
@@ -482,7 +589,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams([
@@ -496,7 +603,7 @@ class ContentValidationListenerTest extends TestCase
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
 
         $response = $listener->onRoute($event);
-        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
         return $response;
     }
 
@@ -618,7 +725,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod($method);
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($data);
@@ -632,7 +739,7 @@ class ContentValidationListenerTest extends TestCase
 
         // Ensure input filter discovered is the same one we expect
         $inputFilter = $event->getParam('ZF\ContentValidation\InputFilter');
-        $this->assertInstanceOf('Zend\InputFilter\InputFilterInterface', $inputFilter);
+        $this->assertInstanceOf(InputFilterInterface::class, $inputFilter);
         $this->assertSame($services->get($filterName), $inputFilter);
 
         // Ensure we have a response we expect
@@ -640,13 +747,13 @@ class ContentValidationListenerTest extends TestCase
             $this->assertNull($result);
             $this->assertNull($event->getResponse());
         } else {
-            $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $result);
+            $this->assertInstanceOf(ApiProblemResponse::class, $result);
         }
     }
 
     public function testMergesFilesArrayIntoDataPriorToValidationWhenFilesArrayIsPopulated()
     {
-        $validator = $this->getMock('Zend\InputFilter\InputFilterInterface');
+        $validator = $this->getMockBuilder(InputFilterInterface::class)->getMock();
         $services = new ServiceManager();
         $services->setService('FooValidator', $validator);
 
@@ -683,7 +790,7 @@ class ContentValidationListenerTest extends TestCase
         $request->setMethod('POST');
         $request->setFiles($files);
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $event   = new MvcEvent();
         $event->setRequest($request);
@@ -748,7 +855,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod($method);
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
 
@@ -802,7 +909,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod($method);
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = array_fill(0, 10, [
             'foo' => '123a',
@@ -817,7 +924,7 @@ class ContentValidationListenerTest extends TestCase
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
 
         $response = $listener->onRoute($event);
-        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
     }
 
     /**
@@ -853,7 +960,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('PATCH');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = array_fill(0, 10, [
             'foo' => 123,
@@ -904,7 +1011,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = array_fill(0, 10, [
             'foo' => 123,
@@ -956,7 +1063,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = array_fill(0, 10, [
             'foo' => 'abc',
@@ -972,7 +1079,7 @@ class ContentValidationListenerTest extends TestCase
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
 
         $response = $listener->onRoute($event);
-        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
         $this->assertEquals(422, $response->getApiProblem()->status);
     }
 
@@ -1009,7 +1116,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = [
             'foo' => 123,
@@ -1061,7 +1168,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = [
             'foo' => 'abc',
@@ -1077,7 +1184,7 @@ class ContentValidationListenerTest extends TestCase
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
 
         $response = $listener->onRoute($event);
-        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
         $this->assertEquals(422, $response->getApiProblem()->status);
     }
 
@@ -1108,7 +1215,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = [
             'foo' => ' abc ',
@@ -1132,7 +1239,7 @@ class ContentValidationListenerTest extends TestCase
     public function testShouldSaveFilteredDataWhenRequiredEvenIfInputFilterIsNotUnknownInputsCapable()
     {
         $services = new ServiceManager();
-        $inputFilter = $this->getMock('Zend\InputFilter\InputFilterInterface');
+        $inputFilter = $this->getMockBuilder(InputFilterInterface::class)->getMock();
         $inputFilter->expects($this->any())
             ->method('setData')
             ->willReturn($this->returnValue(null));
@@ -1157,7 +1264,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = [
             'foo' => ' abc ',
@@ -1200,7 +1307,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = [
             'foo' => ' abc ',
@@ -1246,7 +1353,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = [
             'foo' => ' abc ',
@@ -1263,7 +1370,7 @@ class ContentValidationListenerTest extends TestCase
 
         $result = $listener->onRoute($event);
 
-        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $result);
+        $this->assertInstanceOf(ApiProblemResponse::class, $result);
         $apiProblemData = $result->getApiProblem()->toArray();
         $this->assertEquals(422, $apiProblemData['status']);
         $this->assertContains('Unrecognized fields', $apiProblemData['detail']);
@@ -1297,7 +1404,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = [
             'foo' => ' abc ',
@@ -1313,11 +1420,59 @@ class ContentValidationListenerTest extends TestCase
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
 
         $result = $listener->onRoute($event);
-        $this->assertNotInstanceOf('ZF\ApiProblem\ApiProblemResponse', $result);
+        $this->assertNotInstanceOf(ApiProblemResponse::class, $result);
         $this->assertEquals('abc', $dataParams->getBodyParam('foo'));
         $this->assertEquals('value', $dataParams->getBodyParam('unknown'));
     }
 
+    /**
+     * @group 65
+     */
+    public function testUseRawAndAllowOnlyFieldsInFilterData()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooFilter', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'filters' => [
+                    ['name' => 'StringTrim'],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => [
+                'input_filter' => 'FooFilter',
+                'allows_only_fields_in_filter' => true,
+                'use_raw_data' => true,
+            ],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
+
+        $params = [
+            'foo' => ' abc ',
+            'unknown' => 'value'
+        ];
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $result = $listener->onRoute($event);
+        $this->assertInstanceOf(ApiProblemResponse::class, $result);
+        $this->assertEquals(422, $result->getApiProblem()->status);
+        $this->assertEquals('Unrecognized fields: unknown', $result->getApiProblem()->detail);
+    }
 
     /**
      * @group 29
@@ -1339,7 +1494,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = [
             'foo' => ' abc ',
@@ -1403,7 +1558,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod($method);
 
-        $matches = new RouteMatch([
+        $matches = $this->createRouteMatch([
             'controller' => 'Foo',
             'foo_id'     => uniqid(),
         ]);
@@ -1459,7 +1614,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams([]);
@@ -1470,7 +1625,7 @@ class ContentValidationListenerTest extends TestCase
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
 
         $response = $listener->onRoute($event);
-        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
         $this->assertEquals(422, $response->getApiProblem()->status);
     }
 
@@ -1498,13 +1653,12 @@ class ContentValidationListenerTest extends TestCase
         $eventManager = new EventManager();
         $listener->setEventManager($eventManager);
 
-        $runner = $this;
         $hasRun = false;
         $eventManager->attach(
             ContentValidationListener::EVENT_BEFORE_VALIDATE,
-            function (MvcEvent $e) use ($runner, &$hasRun) {
-                $runner->assertInstanceOf(
-                    'Zend\InputFilter\InputFilterInterface',
+            function (MvcEvent $e) use (&$hasRun) {
+                $this->assertInstanceOf(
+                    InputFilterInterface::class,
                     $e->getParam('ZF\ContentValidation\InputFilter')
                 );
                 $hasRun = true;
@@ -1514,7 +1668,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('PUT');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = array_fill(0, 10, [
             'foo' => '123',
@@ -1523,7 +1677,7 @@ class ContentValidationListenerTest extends TestCase
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
 
-        $event   = new MvcEvent();
+        $event = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -1557,13 +1711,12 @@ class ContentValidationListenerTest extends TestCase
         $eventManager = new EventManager();
         $listener->setEventManager($eventManager);
 
-        $runner = $this;
         $hasRun = false;
         $eventManager->attach(
             ContentValidationListener::EVENT_BEFORE_VALIDATE,
-            function (MvcEvent $e) use ($runner, &$hasRun) {
-                $runner->assertInstanceOf(
-                    'Zend\InputFilter\InputFilterInterface',
+            function (MvcEvent $e) use (&$hasRun) {
+                $this->assertInstanceOf(
+                    InputFilterInterface::class,
                     $e->getParam('ZF\ContentValidation\InputFilter')
                 );
                 $hasRun = true;
@@ -1574,7 +1727,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('PUT');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = array_fill(0, 10, [
             'foo' => '123',
@@ -1590,7 +1743,7 @@ class ContentValidationListenerTest extends TestCase
 
         $response = $listener->onRoute($event);
         $this->assertTrue($hasRun);
-        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
         $this->assertEquals(422, $response->getApiProblem()->status);
         $this->assertEquals('Validation failed', $response->getApiProblem()->detail);
     }
@@ -1620,13 +1773,12 @@ class ContentValidationListenerTest extends TestCase
         $eventManager = new EventManager();
         $listener->setEventManager($eventManager);
 
-        $runner = $this;
         $hasRun = false;
         $eventManager->attach(
             ContentValidationListener::EVENT_BEFORE_VALIDATE,
-            function (MvcEvent $e) use ($runner, &$hasRun) {
-                $runner->assertInstanceOf(
-                    'Zend\InputFilter\InputFilterInterface',
+            function (MvcEvent $e) use (&$hasRun) {
+                $this->assertInstanceOf(
+                    InputFilterInterface::class,
                     $e->getParam('ZF\ContentValidation\InputFilter')
                 );
                 $hasRun = true;
@@ -1637,7 +1789,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('PUT');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = array_fill(0, 10, [
             'foo' => '123',
@@ -1653,7 +1805,7 @@ class ContentValidationListenerTest extends TestCase
 
         $response = $listener->onRoute($event);
         $this->assertTrue($hasRun);
-        $this->assertInstanceOf('ZF\ApiProblem\ApiProblemResponse', $response);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
         $this->assertEquals(422, $response->getApiProblem()->status);
         $this->assertEquals('Validation failed', $response->getApiProblem()->detail);
     }
