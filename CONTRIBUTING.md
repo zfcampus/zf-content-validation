@@ -74,3 +74,7 @@ $ composer cs-fix
 
 If you use `cs-fix` to fix issues, make certain you add and commit any files
 changed!
+
+## Conduct
+
+Please see our [CONDUCT.md](CONDUCT.md) to understand expected behavior when interacting with others in the project.
