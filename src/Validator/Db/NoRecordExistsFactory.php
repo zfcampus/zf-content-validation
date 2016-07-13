@@ -49,7 +49,7 @@ class NoRecordExistsFactory implements FactoryInterface
      * @param ServiceLocatorInterface $validators
      * @return NoRecordExists
      */
-    public function createService(ServiceLocatorInterface $container, $name = null, $requestedName = null)
+    public function createService(ServiceLocatorInterface $validators)
     {
         $container = $validators->getServiceLocator() ?: $validators;
         return $this($container, NoRecordExists::class, $this->options);
