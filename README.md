@@ -140,22 +140,39 @@ Example:
 The following configuration is defined by the module in order to function within a ZF2 application.
 
 ```php
-'input_filters' => [
-    'abstract_factories' => [
-        'ZF\ContentValidation\InputFilter\InputFilterAbstractServiceFactory',
+namespace ZF\ContentValidation;
+
+use Zend\InputFiler\InputFilterAbstractServiceFactory;
+use Zend\ServiceManager\Factory\InvokableFactory;
+
+return [
+    'controller_plugins' => [
+        'aliases' => [
+            'getinputfilter' => InputFilter\InputFilterPlugin::class,
+            'getInputfilter' => InputFilter\InputFilterPlugin::class,
+            'getInputFilter' => InputFilter\InputFilterPlugin::class,
+        ],
+        'factories' => [
+            InputFilter\InputFilterPlugin::class => InvokableFactory::class,
+        ],
     ],
-],
-'service_manager' => [
-    'factories' => [
-        'ZF\ContentValidation\ContentValidationListener' => 'ZF\ContentValidation\ContentValidationListenerFactory',
+    'input_filters' => [
+        'abstract_factories' => [
+            InputFilterAbstractServiceFactory::class,
+        ],
     ],
-],
-'validators' => [
-    'factories' => [
-        'ZF\ContentValidation\Validator\DbRecordExists' => 'ZF\ContentValidation\Validator\Db\RecordExistsFactory',
-        'ZF\ContentValidation\Validator\DbNoRecordExists' => 'ZF\ContentValidation\Validator\Db\NoRecordExistsFactory',
+    'service_manager' => [
+        'factories' => [
+            ContentValidationListener::class => ContentValidationListenerFactory::class,
+        ],
     ],
-],
+    'validators' => [
+        'factories' => [
+            Validator\DbRecordExists::class => Validator\Db\RecordExistsFactory::class,
+            Validator\DbNoRecordExists::class => Validator\Db\NoRecordExistsFactory::class,
+        ],
+    ],
+];
 ```
 
 ZF2 Events
