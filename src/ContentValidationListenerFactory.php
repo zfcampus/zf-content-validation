@@ -46,12 +46,12 @@ class ContentValidationListenerFactory
     protected function getRestServicesFromConfig(array $config)
     {
         $restServices = [];
-        if (!isset($config['zf-rest'])) {
+        if (! isset($config['zf-rest'])) {
             return $restServices;
         }
 
         foreach ($config['zf-rest'] as $controllerService => $restConfig) {
-            if (!isset($restConfig['route_identifier_name'])) {
+            if (! isset($restConfig['route_identifier_name'])) {
                 continue;
             }
             $restServices[$controllerService] = $restConfig['route_identifier_name'];

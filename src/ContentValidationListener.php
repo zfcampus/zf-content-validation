@@ -123,7 +123,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
      */
     public function getEventManager()
     {
-        if (!$this->events) {
+        if (! $this->events) {
             $this->setEventManager(new EventManager());
         }
         return $this->events;
