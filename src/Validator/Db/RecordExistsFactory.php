@@ -1,18 +1,18 @@
 <?php
 /**
  * @license   http://opensource.org/licenses/BSD-3-Clause BSD-3-Clause
- * @copyright Copyright (c) 2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2013-2016 Zend Technologies USA Inc. (http://www.zend.com)
  */
 
 namespace ZF\ContentValidation\Validator\Db;
 
+use Interop\Container\ContainerInterface;
 use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\MutableCreationOptionsInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\Stdlib\ArrayUtils;
 use Zend\Validator\Db\RecordExists;
 
-class RecordExistsFactory implements FactoryInterface, MutableCreationOptionsInterface
+class RecordExistsFactory implements FactoryInterface
 {
     /**
      * @var array
@@ -20,16 +20,30 @@ class RecordExistsFactory implements FactoryInterface, MutableCreationOptionsInt
     protected $options = [];
 
     /**
-     * Set options property
+     * Create and return a RecordExists validator instance.
      *
-     * @param array $options
+     * @param ContainerInterface $container
+     * @param string $requestedName
+     * @param null|array $options
+     * @return RecordExists
      */
-    public function setCreationOptions(array $options)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $this->options = $options;
+        if (isset($options['adapter'])) {
+            return new RecordExists(ArrayUtils::merge(
+                $options,
+                ['adapter' => $container->get($options['adapter'])]
+            ));
+        }
+
+        return new RecordExists($options);
     }
 
     /**
+     * Create and return a RecordExists validator instance (v2).
+     *
+     * Provided for backwards compatibility; proxies to __invoke().
+     *
      * @param ServiceLocatorInterface $validators
      * @return RecordExists
      */
@@ -43,5 +57,17 @@ class RecordExistsFactory implements FactoryInterface, MutableCreationOptionsInt
         }
 
         return new RecordExists($this->options);
+    }
+
+    /**
+     * Set options property
+     *
+     * Implemented for backwards compatibility.
+     *
+     * @param array $options
+     */
+    public function setCreationOptions(array $options)
+    {
+        $this->options = $options;
     }
 }

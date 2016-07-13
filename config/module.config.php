@@ -1,13 +1,23 @@
-<?php // @codingStandardsIgnoreFile
+<?php
 /**
  * @license   http://opensource.org/licenses/BSD-3-Clause BSD-3-Clause
  * @copyright Copyright (c) 2014 Zend Technologies USA Inc. (http://www.zend.com)
  */
 
+namespace ZF\ContentValidation;
+
+use Zend\InputFiler\InputFilterAbstractServiceFactory;
+use Zend\ServiceManager\Factory\InvokableFactory;
+
 return [
     'controller_plugins' => [
-        'invokables' => [
-            'getinputfilter' => 'ZF\ContentValidation\InputFilter\InputFilterPlugin',
+        'aliases' => [
+            'getinputfilter' => InputFilter\InputFilterPlugin::class,
+            'getInputfilter' => InputFilter\InputFilterPlugin::class,
+            'getInputFilter' => InputFilter\InputFilterPlugin::class,
+        ],
+        'factories' => [
+            InputFilter\InputFilterPlugin::class => InvokableFactory::class,
         ],
     ],
     'input_filter_specs' => [
@@ -23,18 +33,18 @@ return [
     ],
     'input_filters' => [
         'abstract_factories' => [
-            'Zend\InputFilter\InputFilterAbstractServiceFactory',
+            InputFilterAbstractServiceFactory::class,
         ],
     ],
     'service_manager' => [
         'factories' => [
-            'ZF\ContentValidation\ContentValidationListener' => 'ZF\ContentValidation\ContentValidationListenerFactory',
+            ContentValidationListener::class => ContentValidationListenerFactory::class,
         ],
     ],
     'validators' => [
         'factories' => [
-            'ZF\ContentValidation\Validator\DbRecordExists' => 'ZF\ContentValidation\Validator\Db\RecordExistsFactory',
-            'ZF\ContentValidation\Validator\DbNoRecordExists' => 'ZF\ContentValidation\Validator\Db\NoRecordExistsFactory',
+            Validator\DbRecordExists::class => Validator\Db\RecordExistsFactory::class,
+            Validator\DbNoRecordExists::class => Validator\Db\NoRecordExistsFactory::class,
         ],
     ],
     'zf-content-validation' => [

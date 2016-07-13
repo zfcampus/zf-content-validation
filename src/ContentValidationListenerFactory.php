@@ -1,38 +1,47 @@
 <?php
 /**
  * @license   http://opensource.org/licenses/BSD-3-Clause BSD-3-Clause
- * @copyright Copyright (c) 2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2014-2016 Zend Technologies USA Inc. (http://www.zend.com)
  */
 
 namespace ZF\ContentValidation;
 
+use Interop\Container\ContainerInterface;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 class ContentValidationListenerFactory implements FactoryInterface
 {
     /**
-     * @param ServiceLocatorInterface $services
+     * Create and return a ContentValidationListener instance.
+     *
+     * @param ContainerInterface $container
      * @return ContentValidationListener
      */
-    public function createService(ServiceLocatorInterface $services)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $contentValidationConfig = [];
-        $restServices            = [];
-
-        if ($services->has('Config')) {
-            $config = $services->get('Config');
-            if (isset($config['zf-content-validation'])) {
-                $contentValidationConfig = $config['zf-content-validation'];
-            }
-            $restServices = $this->getRestServicesFromConfig($config);
-        }
+        $config = $container->has('config') ? $container->get('config') : [];
+        $contentValidationConfig = isset($config['zf-content-validation']) ? $config['zf-content-validation'] : [];
+        $restServices = $this->getRestServicesFromConfig($config);
 
         return new ContentValidationListener(
             $contentValidationConfig,
-            $services->get('InputFilterManager'),
+            $container->get('InputFilterManager'),
             $restServices
         );
+    }
+
+    /**
+     * Create and return a ContentValidationListener instance (v2).
+     *
+     * Provided for backwards compatibility; proxies to __invoke().
+     *
+     * @param ServiceLocatorInterface $container
+     * @return ContentValidationListener
+     */
+    public function createService(ServiceLocatorInterface $container)
+    {
+        return $this($container, ContentValidationListener::class);
     }
 
     /**
@@ -47,12 +56,12 @@ class ContentValidationListenerFactory implements FactoryInterface
     protected function getRestServicesFromConfig(array $config)
     {
         $restServices = [];
-        if (!isset($config['zf-rest'])) {
+        if (! isset($config['zf-rest'])) {
             return $restServices;
         }
 
         foreach ($config['zf-rest'] as $controllerService => $restConfig) {
-            if (!isset($restConfig['route_identifier_name'])) {
+            if (! isset($restConfig['route_identifier_name'])) {
                 continue;
             }
             $restServices[$controllerService] = $restConfig['route_identifier_name'];

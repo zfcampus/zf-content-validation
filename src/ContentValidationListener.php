@@ -1,7 +1,7 @@
 <?php
 /**
  * @license   http://opensource.org/licenses/BSD-3-Clause BSD-3-Clause
- * @copyright Copyright (c) 2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2014-2016 Zend Technologies USA Inc. (http://www.zend.com)
  */
 
 namespace ZF\ContentValidation;
@@ -10,6 +10,7 @@ use Zend\EventManager\EventManager;
 use Zend\EventManager\EventManagerInterface;
 use Zend\EventManager\EventManagerAwareInterface;
 use Zend\EventManager\ListenerAggregateInterface;
+use Zend\EventManager\ListenerAggregateTrait;
 use Zend\Http\Request as HttpRequest;
 use Zend\Http\Response;
 use Zend\InputFilter\CollectionInputFilter;
@@ -17,7 +18,8 @@ use Zend\InputFilter\Exception\InvalidArgumentException as InputFilterInvalidArg
 use Zend\InputFilter\InputFilterInterface;
 use Zend\InputFilter\UnknownInputsCapableInterface;
 use Zend\Mvc\MvcEvent;
-use Zend\Mvc\Router\RouteMatch;
+use Zend\Mvc\Router\RouteMatch as V2RouteMatch;
+use Zend\Router\RouteMatch;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\Stdlib\ArrayUtils;
 use Zend\Stdlib\CallbackHandler;
@@ -27,6 +29,8 @@ use ZF\ContentNegotiation\ParameterDataContainer;
 
 class ContentValidationListener implements ListenerAggregateInterface, EventManagerAwareInterface
 {
+    use ListenerAggregateTrait;
+
     const EVENT_BEFORE_VALIDATE = 'contentvalidation.beforevalidate';
 
     /**
@@ -47,11 +51,6 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
      * @var array
      */
     protected $inputFilters = [];
-
-    /**
-     * @var CallbackHandler[]
-     */
-    protected $listeners = [];
 
     /**
      * @var array
@@ -140,19 +139,6 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
     }
 
     /**
-     * @see   ListenerAggregateInterface
-     * @param EventManagerInterface $events
-     */
-    public function detach(EventManagerInterface $events)
-    {
-        foreach ($this->listeners as $index => $callback) {
-            if ($events->detach($callback)) {
-                unset($this->listeners[$index]);
-            }
-        }
-    }
-
-    /**
      * Attempt to validate the incoming request
      *
      * If an input filter is associated with the matched controller service,
@@ -178,9 +164,10 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         }
 
         $routeMatches = $e->getRouteMatch();
-        if (! $routeMatches instanceof RouteMatch) {
+        if (! ($routeMatches instanceof RouteMatch || $routeMatches instanceof V2RouteMatch)) {
             return;
         }
+
         $controllerService = $routeMatches->getParam('controller', false);
         if (! $controllerService) {
             return;
@@ -212,7 +199,8 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         }
 
         $data = in_array($method, $this->methodsWithoutBodies)
-            ? $dataContainer->getQueryParams() : $dataContainer->getBodyParams();
+            ? $dataContainer->getQueryParams()
+            : $dataContainer->getBodyParams();
 
         if (null === $data || '' === $data) {
             $data = [];
@@ -238,11 +226,12 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         $e->setParam('ZF\ContentValidation\InputFilter', $inputFilter);
 
         $events = $this->getEventManager();
-        $results = $events->trigger(self::EVENT_BEFORE_VALIDATE, $e, function ($result) {
+        $e->setName(self::EVENT_BEFORE_VALIDATE);
+        $results = $events->triggerEventUntil(function ($result) {
             return ($result instanceof ApiProblem
                 || $result instanceof ApiProblemResponse
             );
-        });
+        }, $e);
 
         $last = $results->last();
 
