@@ -6,10 +6,16 @@
 
 namespace ZF\ContentValidation;
 
+use Zend\InputFilter\InputFilterAbstractServiceFactory;
+use Zend\ServiceManager\Factory\InvokableFactory;
+
 return [
     'controller_plugins' => [
-        'invokables' => [
+        'aliases' => [
             'getinputfilter' => InputFilter\InputFilterPlugin::class,
+        ],
+        'factories' => [
+            InputFilter\InputFilterPlugin::class => InvokableFactory::class,
         ],
     ],
     'input_filter_specs' => [
@@ -25,7 +31,7 @@ return [
     ],
     'input_filters' => [
         'abstract_factories' => [
-            \Zend\InputFilter\InputFilterAbstractServiceFactory::class,
+            InputFilterAbstractServiceFactory::class,
         ],
     ],
     'service_manager' => [
