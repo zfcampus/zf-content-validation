@@ -6,7 +6,7 @@ ZF Content Validation
 Introduction
 ------------
 
-ZF2 Module for automating validation of incoming input.
+Zend Framework module for automating validation of incoming input.
 
 Allows the following:
 
