@@ -142,18 +142,18 @@ The following configuration is defined by the module in order to function within
 ```php
 'input_filters' => [
     'abstract_factories' => [
-        'ZF\ContentValidation\InputFilter\InputFilterAbstractServiceFactory',
+        \Zend\InputFilter\InputFilterAbstractServiceFactory::class,
     ],
 ],
 'service_manager' => [
     'factories' => [
-        'ZF\ContentValidation\ContentValidationListener' => 'ZF\ContentValidation\ContentValidationListenerFactory',
+        ContentValidationListener::class => ContentValidationListenerFactory::class,
     ],
 ],
 'validators' => [
     'factories' => [
-        'ZF\ContentValidation\Validator\DbRecordExists' => 'ZF\ContentValidation\Validator\Db\RecordExistsFactory',
-        'ZF\ContentValidation\Validator\DbNoRecordExists' => 'ZF\ContentValidation\Validator\Db\NoRecordExistsFactory',
+        'ZF\ContentValidation\Validator\DbRecordExists' => Validator\Db\RecordExistsFactory::class,
+        'ZF\ContentValidation\Validator\DbNoRecordExists' => Validator\Db\NoRecordExistsFactory::class,
     ],
 ],
 ```
@@ -187,7 +187,7 @@ This plugin is available to Zend Framework 2 controllers. When invoked (`$this->
 
 ### Service
 
-#### ZF\ContentValidation\InputFilter\InputFilterAbstractServiceFactory
+#### Zend\InputFilter\InputFilterAbstractServiceFactory
 
 This abstract factory is responsible for creating and returning an appropriate input filter given
 a name and the configuration from the top-level key `input_filter_specs`. It is registered with
