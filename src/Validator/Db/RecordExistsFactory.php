@@ -15,9 +15,11 @@ use Zend\Validator\Db\RecordExists;
 class RecordExistsFactory implements FactoryInterface
 {
     /**
-     * @var array
+     * Required for v2 compatibility.
+     *
+     * @var null|array
      */
-    protected $options = [];
+    private $options;
 
     /**
      * Create and return a RecordExists validator instance.
@@ -49,14 +51,8 @@ class RecordExistsFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $validators)
     {
-        if (isset($this->options['adapter'])) {
-            return new RecordExists(ArrayUtils::merge(
-                $this->options,
-                ['adapter' => $validators->getServiceLocator()->get($this->options['adapter'])]
-            ));
-        }
-
-        return new RecordExists($this->options);
+        $container = $validators->getServiceLocator() ?: $validators;
+        return $this($container, RecordExists::class, $this->options);
     }
 
     /**

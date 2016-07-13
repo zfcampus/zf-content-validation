@@ -20,10 +20,10 @@ use Zend\ServiceManager\ServiceManager;
 use Zend\Stdlib\ArrayUtils;
 use Zend\Stdlib\Parameters;
 use Zend\Stdlib\Request as StdlibRequest;
+use ZF\ApiProblem\ApiProblem;
+use ZF\ApiProblem\ApiProblemResponse;
 use ZF\ContentNegotiation\ParameterDataContainer;
 use ZF\ContentValidation\ContentValidationListener;
-use ZF\ApiProblem\ApiProblemResponse;
-use ZF\ApiProblem\ApiProblem;
 
 class ContentValidationListenerTest extends TestCase
 {
@@ -183,7 +183,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('GET');
 
-        $matches = $this->createRouteMatch(['controller' => 'Foo'], ['foo_id' => 3]);
+        $matches = $this->createRouteMatch(['controller' => 'Foo', 'foo_id' => 3]);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setQueryParams([
@@ -1677,7 +1677,7 @@ class ContentValidationListenerTest extends TestCase
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
 
-        $event   = new MvcEvent();
+        $event = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);

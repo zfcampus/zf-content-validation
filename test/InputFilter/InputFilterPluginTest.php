@@ -14,8 +14,10 @@ use ZF\ContentValidation\InputFilter\InputFilterPlugin;
 
 class InputFilterPluginTest extends TestCase
 {
-    public function setUp()
+    protected function setUp()
     {
+        parent::setUp();
+
         $this->event = $event = new MvcEvent();
 
         $controller = $this->getMockBuilder(AbstractController::class)->getMock();

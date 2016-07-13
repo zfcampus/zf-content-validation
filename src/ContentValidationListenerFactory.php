@@ -10,7 +10,7 @@ use Interop\Container\ContainerInterface;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
-class ContentValidationListenerFactory implements FactoryInterface
+class ContentValidationListenerFactory
 {
     /**
      * Create and return a ContentValidationListener instance.

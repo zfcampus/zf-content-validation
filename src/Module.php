@@ -7,7 +7,6 @@
 namespace ZF\ContentValidation;
 
 use Zend\Mvc\MvcEvent;
-use ZF\ContentValidation\ContentValidationListener;
 
 class Module
 {

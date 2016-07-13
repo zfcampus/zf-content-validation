@@ -7,8 +7,8 @@
 namespace ZF\ContentValidation;
 
 use Zend\EventManager\EventManager;
-use Zend\EventManager\EventManagerInterface;
 use Zend\EventManager\EventManagerAwareInterface;
+use Zend\EventManager\EventManagerInterface;
 use Zend\EventManager\ListenerAggregateInterface;
 use Zend\EventManager\ListenerAggregateTrait;
 use Zend\Http\Request as HttpRequest;
@@ -22,7 +22,6 @@ use Zend\Mvc\Router\RouteMatch as V2RouteMatch;
 use Zend\Router\RouteMatch;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\Stdlib\ArrayUtils;
-use Zend\Stdlib\CallbackHandler;
 use ZF\ApiProblem\ApiProblem;
 use ZF\ApiProblem\ApiProblemResponse;
 use ZF\ContentNegotiation\ParameterDataContainer;
@@ -74,6 +73,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
     /**
      * @param array $config
      * @param null|ServiceLocatorInterface $inputFilterManager
+     * @param array $restControllers
      */
     public function __construct(
         array $config = [],
@@ -121,7 +121,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
      */
     public function getEventManager()
     {
-        if (!$this->events) {
+        if (! $this->events) {
             $this->setEventManager(new EventManager());
         }
         return $this->events;
@@ -224,6 +224,9 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         }
 
         $e->setParam('ZF\ContentValidation\InputFilter', $inputFilter);
+
+        $event = clone $e;
+        $event->setName(self::EVENT_BEFORE_VALIDATE);
 
         $events = $this->getEventManager();
         $e->setName(self::EVENT_BEFORE_VALIDATE);

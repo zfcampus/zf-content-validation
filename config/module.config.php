@@ -1,7 +1,7 @@
 <?php
 /**
  * @license   http://opensource.org/licenses/BSD-3-Clause BSD-3-Clause
- * @copyright Copyright (c) 2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2014-2016 Zend Technologies USA Inc. (http://www.zend.com)
  */
 
 namespace ZF\ContentValidation;
@@ -28,7 +28,7 @@ return [
          * input filter will be retrieved. The configuration is any valid
          * configuration for an input filter, as shown in the manual:
          *
-         * - http://zf2.readthedocs.org/en/latest/modules/zend.input-filter.intro.html
+         * - https://docs.zendframework.com/zend-inputfilter/intro/
          */
     ],
     'input_filters' => [

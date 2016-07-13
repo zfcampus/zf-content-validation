@@ -15,9 +15,11 @@ use Zend\Validator\Db\NoRecordExists;
 class NoRecordExistsFactory implements FactoryInterface
 {
     /**
-     * @var array
+     * Required for v2 compatibility.
+     *
+     * @var null|array
      */
-    protected $options = [];
+    private $options;
 
     /**
      * Create and return a NoRecordExists validator.
@@ -32,7 +34,7 @@ class NoRecordExistsFactory implements FactoryInterface
         if (isset($options['adapter'])) {
             return new NoRecordExists(ArrayUtils::merge(
                 $options,
-                ['adapter' => $container->get($this->options['adapter'])]
+                ['adapter' => $container->get($options['adapter'])]
             ));
         }
 
@@ -47,7 +49,7 @@ class NoRecordExistsFactory implements FactoryInterface
      * @param ServiceLocatorInterface $validators
      * @return NoRecordExists
      */
-    public function createService(ServiceLocatorInterface $validators)
+    public function createService(ServiceLocatorInterface $container, $name = null, $requestedName = null)
     {
         $container = $validators->getServiceLocator() ?: $validators;
         return $this($container, NoRecordExists::class, $this->options);

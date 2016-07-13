@@ -44,7 +44,7 @@ matrix:
         - DEPS=latest
   allow_failures:
     - php: hhvm
-  
+
 notifications:
   irc: "irc.freenode.org#apigility-dev"
   email: false
