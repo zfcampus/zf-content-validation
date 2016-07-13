@@ -1,47 +1,32 @@
 <?php
 /**
  * @license   http://opensource.org/licenses/BSD-3-Clause BSD-3-Clause
- * @copyright Copyright (c) 2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2013-2016 Zend Technologies USA Inc. (http://www.zend.com)
  */
 
 namespace ZF\ContentValidation\Validator\Db;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\MutableCreationOptionsInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Interop\Container\ContainerInterface;
 use Zend\Stdlib\ArrayUtils;
 use Zend\Validator\Db\NoRecordExists;
 
-class NoRecordExistsFactory implements FactoryInterface, MutableCreationOptionsInterface
+class NoRecordExistsFactory
 {
     /**
-     * @var array
-     */
-    protected $options = [];
-
-    /**
-     * Set options property
-     *
-     * @param array $options
-     */
-    public function setCreationOptions(array $options)
-    {
-        $this->options = $options;
-    }
-
-    /**
-     * @param ServiceLocatorInterface $validators
+     * @param ContainerInterface $container
+     * @param string $requestedName
+     * @param array|null $options
      * @return NoRecordExists
      */
-    public function createService(ServiceLocatorInterface $validators)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        if (isset($this->options['adapter'])) {
+        if (isset($options['adapter'])) {
             return new NoRecordExists(ArrayUtils::merge(
-                $this->options,
-                ['adapter' => $validators->getServiceLocator()->get($this->options['adapter'])]
+                $options,
+                ['adapter' => $container->get($options['adapter'])]
             ));
         }
 
-        return new NoRecordExists($this->options);
+        return new NoRecordExists($options);
     }
 }

@@ -1,7 +1,7 @@
 <?php
 /**
  * @license   http://opensource.org/licenses/BSD-3-Clause BSD-3-Clause
- * @copyright Copyright (c) 2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2014-2016 Zend Technologies USA Inc. (http://www.zend.com)
  */
 
 namespace ZF\ContentValidation;
@@ -17,10 +17,10 @@ use Zend\InputFilter\Exception\InvalidArgumentException as InputFilterInvalidArg
 use Zend\InputFilter\InputFilterInterface;
 use Zend\InputFilter\UnknownInputsCapableInterface;
 use Zend\Mvc\MvcEvent;
-use Zend\Mvc\Router\RouteMatch;
+use Zend\Mvc\Router\RouteMatch as V2RouteMatch;
+use Zend\Router\RouteMatch;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\Stdlib\ArrayUtils;
-use Zend\Stdlib\CallbackHandler;
 use ZF\ApiProblem\ApiProblem;
 use ZF\ApiProblem\ApiProblemResponse;
 use ZF\ContentNegotiation\ParameterDataContainer;
@@ -49,7 +49,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
     protected $inputFilters = [];
 
     /**
-     * @var CallbackHandler[]
+     * @var callable[]
      */
     protected $listeners = [];
 
@@ -75,6 +75,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
     /**
      * @param array $config
      * @param null|ServiceLocatorInterface $inputFilterManager
+     * @param array $restControllers
      */
     public function __construct(
         array $config = [],
@@ -178,7 +179,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         }
 
         $routeMatches = $e->getRouteMatch();
-        if (! $routeMatches instanceof RouteMatch) {
+        if (! $routeMatches instanceof V2RouteMatch && ! $routeMatches instanceof RouteMatch) {
             return;
         }
         $controllerService = $routeMatches->getParam('controller', false);
@@ -237,12 +238,15 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
 
         $e->setParam('ZF\ContentValidation\InputFilter', $inputFilter);
 
+        $event = clone $e;
+        $event->setName(self::EVENT_BEFORE_VALIDATE);
+
         $events = $this->getEventManager();
-        $results = $events->trigger(self::EVENT_BEFORE_VALIDATE, $e, function ($result) {
+        $results = $events->triggerEventUntil(function ($result) {
             return ($result instanceof ApiProblem
                 || $result instanceof ApiProblemResponse
             );
-        });
+        }, $event);
 
         $last = $results->last();
 
@@ -418,11 +422,11 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
      *
      * @param string $serviceName
      * @param array $data
-     * @param RouteMatch $matches
+     * @param V2RouteMatch|RouteMatch $matches
      * @param HttpRequest $request
      * @return bool
      */
-    protected function isCollection($serviceName, $data, RouteMatch $matches, HttpRequest $request)
+    protected function isCollection($serviceName, $data, $matches, HttpRequest $request)
     {
         if (! array_key_exists($serviceName, $this->restControllers)) {
             return false;

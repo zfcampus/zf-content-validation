@@ -1,13 +1,15 @@
-<?php // @codingStandardsIgnoreFile
+<?php
 /**
  * @license   http://opensource.org/licenses/BSD-3-Clause BSD-3-Clause
- * @copyright Copyright (c) 2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2014-2016 Zend Technologies USA Inc. (http://www.zend.com)
  */
+
+namespace ZF\ContentValidation;
 
 return [
     'controller_plugins' => [
         'invokables' => [
-            'getinputfilter' => 'ZF\ContentValidation\InputFilter\InputFilterPlugin',
+            'getinputfilter' => InputFilter\InputFilterPlugin::class,
         ],
     ],
     'input_filter_specs' => [
@@ -18,23 +20,23 @@ return [
          * input filter will be retrieved. The configuration is any valid
          * configuration for an input filter, as shown in the manual:
          *
-         * - http://zf2.readthedocs.org/en/latest/modules/zend.input-filter.intro.html
+         * - https://docs.zendframework.com/zend-inputfilter/intro/
          */
     ],
     'input_filters' => [
         'abstract_factories' => [
-            'Zend\InputFilter\InputFilterAbstractServiceFactory',
+            \Zend\InputFilter\InputFilterAbstractServiceFactory::class,
         ],
     ],
     'service_manager' => [
         'factories' => [
-            'ZF\ContentValidation\ContentValidationListener' => 'ZF\ContentValidation\ContentValidationListenerFactory',
+            ContentValidationListener::class => ContentValidationListenerFactory::class,
         ],
     ],
     'validators' => [
         'factories' => [
-            'ZF\ContentValidation\Validator\DbRecordExists' => 'ZF\ContentValidation\Validator\Db\RecordExistsFactory',
-            'ZF\ContentValidation\Validator\DbNoRecordExists' => 'ZF\ContentValidation\Validator\Db\NoRecordExistsFactory',
+            'ZF\ContentValidation\Validator\DbRecordExists' => Validator\Db\RecordExistsFactory::class,
+            'ZF\ContentValidation\Validator\DbNoRecordExists' => Validator\Db\NoRecordExistsFactory::class,
         ],
     ],
     'zf-content-validation' => [

@@ -1,27 +1,26 @@
 <?php
 /**
  * @license   http://opensource.org/licenses/BSD-3-Clause BSD-3-Clause
- * @copyright Copyright (c) 2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2014-2016 Zend Technologies USA Inc. (http://www.zend.com)
  */
 
 namespace ZF\ContentValidation;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Interop\Container\ContainerInterface;
 
-class ContentValidationListenerFactory implements FactoryInterface
+class ContentValidationListenerFactory
 {
     /**
-     * @param ServiceLocatorInterface $services
+     * @param ContainerInterface $container
      * @return ContentValidationListener
      */
-    public function createService(ServiceLocatorInterface $services)
+    public function __invoke(ContainerInterface $container)
     {
         $contentValidationConfig = [];
         $restServices            = [];
 
-        if ($services->has('Config')) {
-            $config = $services->get('Config');
+        if ($container->has('Config')) {
+            $config = $container->get('Config');
             if (isset($config['zf-content-validation'])) {
                 $contentValidationConfig = $config['zf-content-validation'];
             }
@@ -30,7 +29,7 @@ class ContentValidationListenerFactory implements FactoryInterface
 
         return new ContentValidationListener(
             $contentValidationConfig,
-            $services->get('InputFilterManager'),
+            $container->get('InputFilterManager'),
             $restServices
         );
     }

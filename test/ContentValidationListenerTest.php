@@ -1,35 +1,33 @@
 <?php
 /**
  * @license   http://opensource.org/licenses/BSD-3-Clause BSD-3-Clause
- * @copyright Copyright (c) 2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2014-2016 Zend Technologies USA Inc. (http://www.zend.com)
  */
 
 namespace ZFTest\ContentValidation;
 
-use PHPUnit_Framework_TestCase as TestCase;
 use Zend\EventManager\EventManager;
-use Zend\EventManager\EventManagerInterface;
 use Zend\Http\Request as HttpRequest;
 use Zend\InputFilter\Factory as InputFilterFactory;
 use Zend\InputFilter\InputFilter;
 use Zend\Mvc\MvcEvent;
-use Zend\Mvc\Router\RouteMatch;
 use Zend\ServiceManager\ServiceManager;
 use Zend\Stdlib\ArrayUtils;
 use Zend\Stdlib\Parameters;
 use Zend\Stdlib\Request as StdlibRequest;
 use ZF\ContentNegotiation\ParameterDataContainer;
 use ZF\ContentValidation\ContentValidationListener;
-use Zend\InputFilter\InputFilterInterface;
 use ZF\ApiProblem\ApiProblemResponse;
 use ZF\ApiProblem\ApiProblem;
 
-class ContentValidationListenerTest extends TestCase
+class ContentValidationListenerTest extends \PHPUnit_Framework_TestCase
 {
+    use RouteMatchFactoryTrait;
+
     public function testAttachesToRouteEventAtLowPriority()
     {
         $listener = new ContentValidationListener();
-        $events = $this->getMock('Zend\EventManager\EventManagerInterface');
+        $events = $this->createMock('Zend\EventManager\EventManagerInterface');
         $events->expects($this->once())
             ->method('attach')
             ->with(
@@ -126,7 +124,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('GET');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setQueryParams([
@@ -176,7 +174,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('GET');
 
-        $matches = new RouteMatch(['controller' => 'Foo'], ['foo_id' => 3]);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setQueryParams([
@@ -217,7 +215,7 @@ class ContentValidationListenerTest extends TestCase
 
         $request = new HttpRequest();
         $request->setMethod('POST');
-        $matches = new RouteMatch([]);
+        $matches = $this->createRouteMatch();
         $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
@@ -232,7 +230,7 @@ class ContentValidationListenerTest extends TestCase
 
         $request = new HttpRequest();
         $request->setMethod('POST');
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
         $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
@@ -251,7 +249,7 @@ class ContentValidationListenerTest extends TestCase
 
         $request = new HttpRequest();
         $request->setMethod('POST');
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
         $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
@@ -279,7 +277,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $event   = new MvcEvent();
         $event->setRequest($request);
@@ -318,7 +316,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams([
@@ -364,7 +362,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams([
@@ -433,7 +431,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams([
@@ -478,7 +476,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('PATCH');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams([
@@ -521,7 +519,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('PATCH');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams([
@@ -582,7 +580,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams([
@@ -718,7 +716,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod($method);
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($data);
@@ -746,7 +744,7 @@ class ContentValidationListenerTest extends TestCase
 
     public function testMergesFilesArrayIntoDataPriorToValidationWhenFilesArrayIsPopulated()
     {
-        $validator = $this->getMock('Zend\InputFilter\InputFilterInterface');
+        $validator = $this->createMock('Zend\InputFilter\InputFilterInterface');
         $services = new ServiceManager();
         $services->setService('FooValidator', $validator);
 
@@ -783,7 +781,7 @@ class ContentValidationListenerTest extends TestCase
         $request->setMethod('POST');
         $request->setFiles($files);
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $event   = new MvcEvent();
         $event->setRequest($request);
@@ -848,7 +846,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod($method);
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
 
@@ -902,7 +900,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod($method);
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = array_fill(0, 10, [
             'foo' => '123a',
@@ -953,7 +951,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('PATCH');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = array_fill(0, 10, [
             'foo' => 123,
@@ -1004,7 +1002,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = array_fill(0, 10, [
             'foo' => 123,
@@ -1056,7 +1054,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = array_fill(0, 10, [
             'foo' => 'abc',
@@ -1109,7 +1107,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = [
             'foo' => 123,
@@ -1161,7 +1159,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = [
             'foo' => 'abc',
@@ -1208,7 +1206,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = [
             'foo' => ' abc ',
@@ -1232,7 +1230,7 @@ class ContentValidationListenerTest extends TestCase
     public function testShouldSaveFilteredDataWhenRequiredEvenIfInputFilterIsNotUnknownInputsCapable()
     {
         $services = new ServiceManager();
-        $inputFilter = $this->getMock('Zend\InputFilter\InputFilterInterface');
+        $inputFilter = $this->createMock('Zend\InputFilter\InputFilterInterface');
         $inputFilter->expects($this->any())
             ->method('setData')
             ->willReturn($this->returnValue(null));
@@ -1257,7 +1255,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = [
             'foo' => ' abc ',
@@ -1300,7 +1298,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = [
             'foo' => ' abc ',
@@ -1346,7 +1344,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = [
             'foo' => ' abc ',
@@ -1397,7 +1395,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = [
             'foo' => ' abc ',
@@ -1446,7 +1444,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = [
             'foo' => ' abc ',
@@ -1488,7 +1486,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = [
             'foo' => ' abc ',
@@ -1552,7 +1550,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod($method);
 
-        $matches = new RouteMatch([
+        $matches = $this->createRouteMatch([
             'controller' => 'Foo',
             'foo_id'     => uniqid(),
         ]);
@@ -1608,7 +1606,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams([]);
@@ -1647,12 +1645,11 @@ class ContentValidationListenerTest extends TestCase
         $eventManager = new EventManager();
         $listener->setEventManager($eventManager);
 
-        $runner = $this;
         $hasRun = false;
         $eventManager->attach(
             ContentValidationListener::EVENT_BEFORE_VALIDATE,
-            function (MvcEvent $e) use ($runner, &$hasRun) {
-                $runner->assertInstanceOf(
+            function (MvcEvent $e) use (&$hasRun) {
+                $this->assertInstanceOf(
                     'Zend\InputFilter\InputFilterInterface',
                     $e->getParam('ZF\ContentValidation\InputFilter')
                 );
@@ -1663,7 +1660,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('PUT');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = array_fill(0, 10, [
             'foo' => '123',
@@ -1672,7 +1669,7 @@ class ContentValidationListenerTest extends TestCase
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
 
-        $event   = new MvcEvent();
+        $event = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -1706,12 +1703,11 @@ class ContentValidationListenerTest extends TestCase
         $eventManager = new EventManager();
         $listener->setEventManager($eventManager);
 
-        $runner = $this;
         $hasRun = false;
         $eventManager->attach(
             ContentValidationListener::EVENT_BEFORE_VALIDATE,
-            function (MvcEvent $e) use ($runner, &$hasRun) {
-                $runner->assertInstanceOf(
+            function (MvcEvent $e) use (&$hasRun) {
+                $this->assertInstanceOf(
                     'Zend\InputFilter\InputFilterInterface',
                     $e->getParam('ZF\ContentValidation\InputFilter')
                 );
@@ -1723,7 +1719,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('PUT');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = array_fill(0, 10, [
             'foo' => '123',
@@ -1769,12 +1765,11 @@ class ContentValidationListenerTest extends TestCase
         $eventManager = new EventManager();
         $listener->setEventManager($eventManager);
 
-        $runner = $this;
         $hasRun = false;
         $eventManager->attach(
             ContentValidationListener::EVENT_BEFORE_VALIDATE,
-            function (MvcEvent $e) use ($runner, &$hasRun) {
-                $runner->assertInstanceOf(
+            function (MvcEvent $e) use (&$hasRun) {
+                $this->assertInstanceOf(
                     'Zend\InputFilter\InputFilterInterface',
                     $e->getParam('ZF\ContentValidation\InputFilter')
                 );
@@ -1786,7 +1781,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('PUT');
 
-        $matches = new RouteMatch(['controller' => 'Foo']);
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $params = array_fill(0, 10, [
             'foo' => '123',
