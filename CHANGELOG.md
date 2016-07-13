@@ -9,6 +9,10 @@ All notable changes to this project will be documented in this file, in reverse 
 - [#64](https://github.com/zfcampus/zf-content-validation/pull/64) adds support
   for providing input filters for `GET` requests; these will validate query
   parameters. Configuration is exactly as it is for other HTTP methods.
+- [#66](https://github.com/zfcampus/zf-content-validation/pull/66) and
+  [#67](https://github.com/zfcampus/zf-content-validation/pull/67) add support
+  for v3 releases of Zend Framework components, while retaining backwards
+  compatibility with v2 releases.
 
 ### Deprecated
 
@@ -16,7 +20,8 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Removed
 
-- Nothing.
+- [#67](https://github.com/zfcampus/zf-content-validation/pull/67) removes
+  support for PHP 5.5.
 
 ### Fixed
 
