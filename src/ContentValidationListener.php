@@ -425,7 +425,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         }
 
         $identifierName = $this->restControllers[$serviceName];
-        if ($matches->getParam($identifierName)) {
+        if ($matches->getParam($identifierName) !== null) {
             return false;
         }
 
