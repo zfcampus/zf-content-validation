@@ -20,7 +20,7 @@ All notable changes to this project will be documented in this file, in reverse 
 
 - Nothing.
 
-## 1.3.1 - TBD
+## 1.3.2 - TBD
 
 ### Added
 
@@ -37,6 +37,25 @@ All notable changes to this project will be documented in this file, in reverse 
 ### Fixed
 
 - Nothing.
+
+## 1.3.1 - 2016-07-19
+
+### Added
+
+- Nothing.
+
+### Deprecated
+
+- Nothing.
+
+### Removed
+
+- Nothing.
+
+### Fixed
+
+- [#71](https://github.com/zfcampus/zf-content-validation/pull/71) corrected
+  typo in module configuration which was leading to fatal errors (class not found).
 
 ## 1.3.0 - 2016-07-13
 
