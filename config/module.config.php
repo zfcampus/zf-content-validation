@@ -6,7 +6,7 @@
 
 namespace ZF\ContentValidation;
 
-use Zend\InputFiler\InputFilterAbstractServiceFactory;
+use Zend\InputFilter\InputFilterAbstractServiceFactory;
 use Zend\ServiceManager\Factory\InvokableFactory;
 
 return [
