@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
-## 1.3.2 - TBD
+## 1.3.3 - TBD
 
 ### Added
 
@@ -19,6 +19,26 @@ All notable changes to this project will be documented in this file, in reverse 
 ### Fixed
 
 - Nothing.
+
+## 1.3.2 - 2016-07-21
+
+### Added
+
+- Nothing.
+
+### Deprecated
+
+- Nothing.
+
+### Removed
+
+- Nothing.
+
+### Fixed
+
+- [#76](https://github.com/zfcampus/zf-content-validation/pull/76) Added FactoryInterface
+  for zend-servicemanager 2.x and updated factory key names for dbRecordExists and
+  dbNoRecordExists validators.
 
 ## 1.3.1 - 2016-07-19
 
