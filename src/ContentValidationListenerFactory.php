@@ -10,12 +10,14 @@ use Interop\Container\ContainerInterface;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
-class ContentValidationListenerFactory
+class ContentValidationListenerFactory implements FactoryInterface
 {
     /**
      * Create and return a ContentValidationListener instance.
      *
      * @param ContainerInterface $container
+     * @param $requestedName
+     * @param array|null $options
      * @return ContentValidationListener
      */
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
