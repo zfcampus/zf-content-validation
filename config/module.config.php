@@ -43,8 +43,8 @@ return [
     ],
     'validators' => [
         'factories' => [
-            Validator\DbRecordExists::class => Validator\Db\RecordExistsFactory::class,
-            Validator\DbNoRecordExists::class => Validator\Db\NoRecordExistsFactory::class,
+            'ZF\ContentValidation\Validator\DbRecordExists' => Validator\Db\RecordExistsFactory::class,
+            'ZF\ContentValidation\Validator\DbNoRecordExists' => Validator\Db\NoRecordExistsFactory::class,
         ],
     ],
     'zf-content-validation' => [
