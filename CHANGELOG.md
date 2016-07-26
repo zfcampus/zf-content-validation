@@ -20,7 +20,7 @@ All notable changes to this project will be documented in this file, in reverse 
 
 - Nothing.
 
-## 1.3.3 - TBD
+## 1.3.3 - 2016-07-26
 
 ### Added
 
@@ -36,7 +36,12 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Fixed
 
-- Nothing.
+- [#78](https://github.com/zfcampus/zf-content-validation/pull/78) updates
+  `ContentValidationListener::isCollection()` to check strictly for absence of
+  an identifier when determining if a collection was requested. Previously, a
+  `0` identifier would be incorrectly flagged as a request for a collection,
+  which would pull the collection input filter instead of the entity input
+  filter.
 
 ## 1.3.2 - 2016-07-21
 
