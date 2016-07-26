@@ -10,6 +10,7 @@ use PHPUnit_Framework_TestCase as TestCase;
 use Zend\EventManager\EventManager;
 use Zend\EventManager\EventManagerInterface;
 use Zend\Http\Request as HttpRequest;
+use Zend\InputFilter\CollectionInputFilter;
 use Zend\InputFilter\Factory as InputFilterFactory;
 use Zend\InputFilter\InputFilter;
 use Zend\InputFilter\InputFilterInterface;
@@ -498,6 +499,105 @@ class ContentValidationListenerTest extends TestCase
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
 
         $this->assertNull($listener->onRoute($event));
+    }
+
+    /**
+     * @dataProvider listMethods
+     */
+    public function testPatchWithZeroRouteIdDoesNotEmitANoticeAndDoesNotHaveCollectionInputFilterWhenRequestHasABody(
+        $verb
+    ) {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService(
+            'FooValidator',
+            $factory->createInputFilter(
+                [
+                    'foo' => [
+                        'name'     => 'foo',
+                        'required' => false,
+                    ],
+                ]
+            )
+        );
+        $listener = new ContentValidationListener(
+            [
+                'Foo' => ['input_filter' => 'FooValidator'],
+            ],
+            $services,
+            [
+                'Foo' => 'foo_id',
+            ]
+        );
+
+        $request = new HttpRequest();
+        $request->setMethod($verb);
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
+        $matches->setParam('foo_id', "0");
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams(
+            [
+                'foo' => 123,
+            ]
+        );
+
+        $event = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $this->assertNull($listener->onRoute($event));
+        $inputFilter = $event->getParam('ZF\ContentValidation\InputFilter');
+        // with notices on, this won't get hit with broken code
+        $this->assertNotInstanceOf(CollectionInputFilter::class, $inputFilter);
+    }
+
+    /**
+     * @dataProvider listMethods
+     */
+    public function testPatchWithZeroRouteIdWithNoRequestBodyDoesNotHaveCollectionInputFilter($verb)
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService(
+            'FooValidator',
+            $factory->createInputFilter(
+                [
+                    'foo' => [
+                        'name'     => 'foo',
+                        'required' => false,
+                    ],
+                ]
+            )
+        );
+        $listener = new ContentValidationListener(
+            [
+                'Foo' => ['input_filter' => 'FooValidator'],
+            ],
+            $services,
+            [
+                'Foo' => 'foo_id',
+            ]
+        );
+
+        $request = new HttpRequest();
+        $request->setMethod($verb);
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
+        $matches->setParam('foo_id', "0");
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams([]);
+
+        $event = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+        $this->assertNull($listener->onRoute($event));
+        $inputFilter = $event->getParam('ZF\ContentValidation\InputFilter');
+        $this->assertNotInstanceOf(CollectionInputFilter::class, $inputFilter);
     }
 
     public function testFailsValidationOfPartialSetsForPatchRequestsThatIncludeUnknownInputs()
