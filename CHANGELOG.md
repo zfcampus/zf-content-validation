@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
-## 1.3.4 - TBD
+## 1.3.4 - 2016-08-04
 
 ### Added
 
@@ -18,7 +18,13 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Fixed
 
-- Nothing.
+- [#81](https://github.com/zfcampus/zf-content-validation/pull/81) fixes an
+  issue with how data was being returned from the content validation listener
+  when raw data was to be used, and unknown fields allowed. In cases where the
+  data was an indexed array (which happens with zf-apigility-admin when submitting
+  an input filter to the API), the data and unknown values, which were
+  identical, were being merged before return. Since raw data always contains all
+  unknown values, we now return before merging.
 
 ## 1.3.3 - 2016-07-26
 
