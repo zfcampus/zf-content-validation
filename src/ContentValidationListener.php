@@ -225,16 +225,16 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
 
         $e->setParam('ZF\ContentValidation\InputFilter', $inputFilter);
 
-        $event = clone $e;
-        $event->setName(self::EVENT_BEFORE_VALIDATE);
+        $currentEventName = $e->getName();
+        $e->setName(self::EVENT_BEFORE_VALIDATE);
 
         $events = $this->getEventManager();
-        $e->setName(self::EVENT_BEFORE_VALIDATE);
         $results = $events->triggerEventUntil(function ($result) {
             return ($result instanceof ApiProblem
                 || $result instanceof ApiProblemResponse
             );
         }, $e);
+        $e->setName($currentEventName);
 
         $last = $results->last();
 
