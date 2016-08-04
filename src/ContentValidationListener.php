@@ -225,16 +225,16 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
 
         $e->setParam('ZF\ContentValidation\InputFilter', $inputFilter);
 
-        $event = clone $e;
-        $event->setName(self::EVENT_BEFORE_VALIDATE);
+        $currentEventName = $e->getName();
+        $e->setName(self::EVENT_BEFORE_VALIDATE);
 
         $events = $this->getEventManager();
-        $e->setName(self::EVENT_BEFORE_VALIDATE);
         $results = $events->triggerEventUntil(function ($result) {
             return ($result instanceof ApiProblem
                 || $result instanceof ApiProblemResponse
             );
         }, $e);
+        $e->setName($currentEventName);
 
         $last = $results->last();
 
@@ -274,7 +274,8 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         //   that was the default experience starting in 1.0.
         // - If the flag is present AND is boolean true, that is also
         //   an indicator that the raw data should be present.
-        if (! $this->useRawData($controllerService)) {
+        $useRawData = $this->useRawData($controllerService);
+        if (! $useRawData) {
             $data = $inputFilter->getValues();
         }
 
@@ -297,6 +298,16 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
 
             return new ApiProblemResponse($problem);
         }
+
+        // The raw data already contains unknown inputs, so no need to merge
+        // them with the data.
+        if ($useRawData) {
+            $dataContainer->setBodyParams($data);
+            return;
+        }
+
+        // When not using raw data, we merge the unknown data with the
+        // validated data to get the full set of input.
         $dataContainer->setBodyParams(array_merge($data, $unknown));
     }
 

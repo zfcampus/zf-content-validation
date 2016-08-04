@@ -335,6 +335,7 @@ class ContentValidationListenerTest extends TestCase
         ]);
 
         $event   = new MvcEvent();
+        $event->setName('route');
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -1908,5 +1909,65 @@ class ContentValidationListenerTest extends TestCase
         $this->assertInstanceOf(ApiProblemResponse::class, $response);
         $this->assertEquals(422, $response->getApiProblem()->status);
         $this->assertEquals('Validation failed', $response->getApiProblem()->detail);
+    }
+
+    public function indexedFields()
+    {
+        return [
+            'flat-array'   => [['foo', 'bar']],
+            'nested-array' => [[['foo' => 'abc', 'bar' => 'baz']]],
+        ];
+    }
+
+    /**
+     * This is testing a scenario from zf-apigility-admin.
+     *
+     * In that module, the InputFilterInputFilter defines no fields, and overrides
+     * isValid() to test that the provided data describes an input filter that can
+     * be created by the input filter factory.
+     *
+     * What we observed is that the data was being duplicated, as the data and the
+     * unknown values were identical.
+     *
+     * @dataProvider indexedFields
+     */
+    public function testWhenNoFieldsAreDefinedAndValidatorPassesIndexedArrayDataShouldNotBeDuplicated($params)
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooFilter', new TestAsset\CustomValidationInputFilter());
+        $listener = new ContentValidationListener([
+            'Foo' => [
+                'input_filter' => 'FooFilter',
+            ],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $this->assertNull($listener->onRoute($event));
+
+        $bodyParams = $dataParams->getBodyParams();
+        $this->assertEquals($params, $bodyParams);
+    }
+
+    /**
+     * @depends testReturnsNothingIfContentIsValid
+     */
+    public function testEventNameShouldBeResetToOriginalOnCompletionOfListener($event)
+    {
+        $this->assertEquals('route', $event->getName());
     }
 }
