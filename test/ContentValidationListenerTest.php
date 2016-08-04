@@ -335,6 +335,7 @@ class ContentValidationListenerTest extends TestCase
         ]);
 
         $event   = new MvcEvent();
+        $event->setName('route');
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -1910,6 +1911,14 @@ class ContentValidationListenerTest extends TestCase
         $this->assertEquals('Validation failed', $response->getApiProblem()->detail);
     }
 
+    public function indexedFields()
+    {
+        return [
+            'flat-array'   => [['foo', 'bar']],
+            'nested-array' => [[['foo' => 'abc', 'bar' => 'baz']]],
+        ];
+    }
+
     /**
      * This is testing a scenario from zf-apigility-admin.
      *
@@ -1919,8 +1928,10 @@ class ContentValidationListenerTest extends TestCase
      *
      * What we observed is that the data was being duplicated, as the data and the
      * unknown values were identical.
+     *
+     * @dataProvider indexedFields
      */
-    public function testWhenNoFieldsAreDefinedAndValidatorPassesFieldsShouldNotBeDuplicated()
+    public function testWhenNoFieldsAreDefinedAndValidatorPassesIndexedArrayDataShouldNotBeDuplicated($params)
     {
         $services = new ServiceManager();
         $factory  = new InputFilterFactory();
@@ -1938,14 +1949,6 @@ class ContentValidationListenerTest extends TestCase
 
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
-        // We specifically noticed it when using indexed arrays, vs associative.
-        $params = [
-            [
-                'foo' => ' abc ',
-                'unknown' => 'value',
-            ],
-        ];
-
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
 
@@ -1958,5 +1961,13 @@ class ContentValidationListenerTest extends TestCase
 
         $bodyParams = $dataParams->getBodyParams();
         $this->assertEquals($params, $bodyParams);
+    }
+
+    /**
+     * @depends testReturnsNothingIfContentIsValid
+     */
+    public function testEventNameShouldBeResetToOriginalOnCompletionOfListener($event)
+    {
+        $this->assertEquals('route', $event->getName());
     }
 }
