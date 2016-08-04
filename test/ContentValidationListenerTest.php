@@ -1909,4 +1909,54 @@ class ContentValidationListenerTest extends TestCase
         $this->assertEquals(422, $response->getApiProblem()->status);
         $this->assertEquals('Validation failed', $response->getApiProblem()->detail);
     }
+
+    /**
+     * This is testing a scenario from zf-apigility-admin.
+     *
+     * In that module, the InputFilterInputFilter defines no fields, and overrides
+     * isValid() to test that the provided data describes an input filter that can
+     * be created by the input filter factory.
+     *
+     * What we observed is that the data was being duplicated, as the data and the
+     * unknown values were identical.
+     */
+    public function testWhenNoFieldsAreDefinedAndValidatorPassesFieldsShouldNotBeDuplicated()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooFilter', new TestAsset\CustomValidationInputFilter());
+        $listener = new ContentValidationListener([
+            'Foo' => [
+                'input_filter' => 'FooFilter',
+            ],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
+
+        // We specifically noticed it when using indexed arrays, vs associative.
+        $params = [
+            [
+                'foo' => ' abc ',
+                'unknown' => 'value',
+            ],
+        ];
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $this->assertNull($listener->onRoute($event));
+
+        $bodyParams = $dataParams->getBodyParams();
+        $this->assertEquals($params, $bodyParams);
+    }
 }
