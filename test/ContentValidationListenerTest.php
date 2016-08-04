@@ -1949,7 +1949,7 @@ class ContentValidationListenerTest extends TestCase
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
 
-        $event   = new MvcEvent();
+        $event = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
