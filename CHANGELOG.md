@@ -18,7 +18,15 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Fixed
 
-- Nothing.
+- [#83](https://github.com/zfcampus/zf-content-validation/pull/83) fixes how
+  input filters are processed when performing GET collections to REST endpoints.
+  This ability was introduce in 1.3.0, but failed to take into account that
+  query string arguments cannot properly represent multiple entities, which led
+  to any input filter for a `ZF\Rest\Resource::fetchAll()` operation to be
+  invalid. The change introduced treats such input filters such that they
+  do not operate as a `CollectionInputFilter`; as such, they should only be used
+  to retrieve values that will be used to sort or filter the collection
+  returned.
 
 ## 1.3.4 - 2016-08-04
 
