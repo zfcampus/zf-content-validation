@@ -1992,14 +1992,6 @@ class ContentValidationListenerTest extends TestCase
     }
 
     /**
-     * @depends testFailsValidationOfPartialSetsForPatchRequestsForCollectionThatIncludeUnknownInputs
-     */
-    public function testInvalidValidationGroupOnCollectionPatchIs400Response($response)
-    {
-        $this->assertEquals(400, $response->getApiProblem()->status);
-    }
-
-    /**
      * @dataProvider listMethods
      * @group 19
      */
