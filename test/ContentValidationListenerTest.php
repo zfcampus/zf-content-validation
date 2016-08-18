@@ -174,7 +174,7 @@ class ContentValidationListenerTest extends TestCase
         ]));
         $listener = new ContentValidationListener([
             'Foo' => ['GET' => 'FooValidator'],
-        ], $services);
+        ], $services, ['Foo' => 'foo_id']);
 
         $request = new HttpRequest();
         $request->setMethod('GET');
