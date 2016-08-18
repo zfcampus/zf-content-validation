@@ -27,6 +27,12 @@ All notable changes to this project will be documented in this file, in reverse 
   do not operate as a `CollectionInputFilter`; as such, they should only be used
   to retrieve values that will be used to sort or filter the collection
   returned.
+- [#84](https://github.com/zfcampus/zf-content-validation/pull/84) fixes how
+  unknown fields are pulled from `CollectionInputFilter` instances when
+  reporting their presence for Problem Details. Previously, it would report only
+  the index of the collection set, and not the values from each; with this
+  release, it now reports the which sets had unknown values, along with the
+  unexpected values detected.
 
 ## 1.3.4 - 2016-08-04
 
