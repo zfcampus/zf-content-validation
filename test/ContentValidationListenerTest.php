@@ -1132,6 +1132,76 @@ class ContentValidationListenerTest extends TestCase
     }
 
     /**
+     * @see https://github.com/zendframework/zend-inputfilter/pull/115
+     */
+    public function testValidatePostedCollectionsAndAllowedOnlyFieldsFromFilterReturnsApiProblemWithUnrecognizedFields()
+    {
+        $this->markTestIncomplete(
+            'Needs changes in zend-inputfilter: https://github.com/zendframework/zend-inputfilter/pull/115'
+        );
+
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener(
+            [
+                'Foo' => [
+                    'input_filter' => 'FooValidator',
+                    'allows_only_fields_in_filter' => true,
+                ],
+            ],
+            $services,
+            ['Foo' => 'foo_id']
+        );
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
+
+        $params = [
+            [
+                'foo' => 123,
+                'bar' => 'abc',
+            ],
+            [
+                'foo' => 345,
+                'bar' => 'baz',
+                'unknown' => 'value',
+            ]
+        ];
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($event);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
+        // @todo: need to be changed, should be something like [1 => ['unknown']]
+        $this->assertContains('Unrecognized fields: 1', $response->getBody());
+    }
+
+    /**
      * @group 3
      */
     public function testReportsValidationFailureForPostedCollection()
