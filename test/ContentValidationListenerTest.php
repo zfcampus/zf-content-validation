@@ -1986,7 +1986,7 @@ class ContentValidationListenerTest extends TestCase
     public function indexedFields()
     {
         return [
-            'flat-array'   => [['foo', 'bar']],
+            'flat-array'   => [[['foo'], ['bar']]],
             'nested-array' => [[['foo' => 'abc', 'bar' => 'baz']]],
         ];
     }
