@@ -288,7 +288,15 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         $unknown    = $inputFilter->getUnknown();
 
         if ($this->allowsOnlyFieldsInFilter($controllerService)) {
-            $fields  = implode(', ', array_keys($unknown));
+            if ($inputFilter instanceof CollectionInputFilter) {
+                $unknownFields = [];
+                foreach ($unknown as $key => $fields) {
+                    $unknownFields[] = '[' . $key . ': ' . implode(', ', array_keys($fields)) . ']';
+                }
+                $fields = implode(', ', $unknownFields);
+            } else {
+                $fields = implode(', ', array_keys($unknown));
+            }
             $detail  = sprintf('Unrecognized fields: %s', $fields);
             $problem = new ApiProblem(Response::STATUS_CODE_422, $detail);
 
