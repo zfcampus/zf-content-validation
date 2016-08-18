@@ -106,6 +106,51 @@ class ContentValidationListenerTest extends TestCase
         $this->assertNull($event->getResponse());
     }
 
+    public function testReturnsNullIfCollectionRequestWithoutBodyIsValid()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['GET' => 'FooValidator'],
+        ], $services, ['Foo' => 'foo_id']);
+
+        $request = new HttpRequest();
+        $request->setMethod('GET');
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setQueryParams([
+            'foo' => 123,
+            'bar' => 'abc',
+        ]);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $this->assertNull($listener->onRoute($event));
+        $this->assertNull($event->getResponse());
+    }
+
     public function testReturnsApiProblemResponseIfCollectionRequestWithoutBodyIsInvalid()
     {
         $services = new ServiceManager();
@@ -156,6 +201,51 @@ class ContentValidationListenerTest extends TestCase
         return $response;
     }
 
+    public function testReturnsNullIfEntityRequestWithoutBodyIsValid()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['GET' => 'FooValidator'],
+        ], $services, ['Foo' => 'foo_id']);
+
+        $request = new HttpRequest();
+        $request->setMethod('GET');
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo', 'foo_id' => 3]);
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setQueryParams([
+            'foo' => 123,
+            'bar' => 'abc',
+        ]);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $this->assertNull($listener->onRoute($event));
+        $this->assertNull($event->getResponse());
+    }
+
     public function testReturnsApiProblemResponseIfEntityRequestWithoutBodyIsInvalid()
     {
         $services = new ServiceManager();
@@ -204,6 +294,220 @@ class ContentValidationListenerTest extends TestCase
         $this->assertContains('The input does not match against pattern \'/^[a-z]+/i\'', $response->getBody());
 
         return $response;
+    }
+
+    public function testReturnsNullIfEntityRequestWithoutBodyIsValidAndUndefinedFieldsAreAllowed()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener(
+            [
+                'Foo' => [
+                    'GET' => 'FooValidator',
+                    'allows_only_fields_in_filter' => false,
+                ],
+            ],
+            $services,
+            ['Foo' => 'foo_id']
+        );
+
+        $request = new HttpRequest();
+        $request->setMethod('GET');
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo', 'foo_id' => 3]);
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setQueryParams([
+            'foo' => 123,
+            'bar' => 'xyz',
+            'undefined' => 'value',
+        ]);
+
+        $event = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $this->assertNull($listener->onRoute($event));
+        $this->assertNull($event->getResponse());
+    }
+
+    public function testReturnsApiProblemResponseIfEntityRequestWithoutBodyIsInvalidAndUnknownFieldsAreDisallowed()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener(
+            [
+                'Foo' => [
+                    'GET' => 'FooValidator',
+                    'allows_only_fields_in_filter' => true,
+                ],
+            ],
+            $services,
+            ['Foo' => 'foo_id']
+        );
+
+        $request = new HttpRequest();
+        $request->setMethod('GET');
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo', 'foo_id' => 3]);
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setQueryParams([
+            'foo' => 123,
+            'bar' => 'xyz',
+            'undefined' => 'value',
+        ]);
+
+        $event = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($event);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
+        $this->assertContains('Unrecognized fields: undefined', $response->getBody());
+    }
+
+    public function testReturnsNullIfCollectionRequestWithoutBodyIsValidAndUndefinedFieldsAreAllowed()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener(
+            [
+                'Foo' => [
+                    'GET' => 'FooValidator',
+                    'allows_only_fields_in_filter' => false,
+                ],
+            ],
+            $services,
+            ['Foo' => 'foo_id']
+        );
+
+        $request = new HttpRequest();
+        $request->setMethod('GET');
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setQueryParams([
+            'foo' => 123,
+            'bar' => 'xyz',
+            'undefined' => 'value',
+        ]);
+
+        $event = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $this->assertNull($listener->onRoute($event));
+        $this->assertNull($event->getResponse());
+    }
+
+    public function testReturnsApiProblemResponseIfCollectionRequestWithoutBodyIsInvalidAndUnknownFieldsAreDisallowed()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener(
+            [
+                'Foo' => [
+                    'GET' => 'FooValidator',
+                    'allows_only_fields_in_filter' => true,
+                ],
+            ],
+            $services,
+            ['Foo' => 'foo_id']
+        );
+
+        $request = new HttpRequest();
+        $request->setMethod('GET');
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setQueryParams([
+            'foo' => 123,
+            'bar' => 'xyz',
+            'undefined' => 'value',
+        ]);
+
+        $event = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($event);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
+        $this->assertContains('Unrecognized fields: undefined', $response->getBody());
     }
 
     public function testReturnsEarlyIfNoRouteMatchesPresent()

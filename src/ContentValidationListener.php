@@ -217,7 +217,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
 
         $inputFilter = $this->getInputFilter($inputFilterService);
 
-        if ($isCollection) {
+        if ($isCollection && !in_array($method, $this->methodsWithoutBodies)) {
             $collectionInputFilter = new CollectionInputFilter();
             $collectionInputFilter->setInputFilter($inputFilter);
             $inputFilter = $collectionInputFilter;
@@ -244,10 +244,6 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
 
         if ($last instanceof ApiProblemResponse) {
             return $last;
-        }
-
-        if ($isCollection && in_array($method, $this->methodsWithoutBodies)) {
-            $data = [$data];
         }
 
         $inputFilter->setData($data);
