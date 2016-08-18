@@ -1131,15 +1131,8 @@ class ContentValidationListenerTest extends TestCase
         $this->assertNull($response);
     }
 
-    /**
-     * @see https://github.com/zendframework/zend-inputfilter/pull/115
-     */
     public function testValidatePostedCollectionsAndAllowedOnlyFieldsFromFilterReturnsApiProblemWithUnrecognizedFields()
     {
-        $this->markTestIncomplete(
-            'Needs changes in zend-inputfilter: https://github.com/zendframework/zend-inputfilter/pull/115'
-        );
-
         $services = new ServiceManager();
         $factory  = new InputFilterFactory();
         $services->setService('FooValidator', $factory->createInputFilter([
@@ -1184,7 +1177,17 @@ class ContentValidationListenerTest extends TestCase
                 'foo' => 345,
                 'bar' => 'baz',
                 'unknown' => 'value',
-            ]
+                'other' => 'abc',
+            ],
+            [
+                'foo' => 678,
+                'bar' => 'oui',
+            ],
+            [
+                'foo' => 988,
+                'bar' => 'com',
+                'key' => 'xyz',
+            ],
         ];
 
         $dataParams = new ParameterDataContainer();
@@ -1197,8 +1200,7 @@ class ContentValidationListenerTest extends TestCase
 
         $response = $listener->onRoute($event);
         $this->assertInstanceOf(ApiProblemResponse::class, $response);
-        // @todo: need to be changed, should be something like [1 => ['unknown']]
-        $this->assertContains('Unrecognized fields: 1', $response->getBody());
+        $this->assertContains('Unrecognized fields: [1: unknown, other], [3: key]', $response->getBody());
     }
 
     /**
