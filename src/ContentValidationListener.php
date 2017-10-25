@@ -224,6 +224,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         }
 
         $e->setParam('ZF\ContentValidation\InputFilter', $inputFilter);
+        $e->setParam('ZF\ContentValidation\ParameterData', $data);
 
         $currentEventName = $e->getName();
         $e->setName(self::EVENT_BEFORE_VALIDATE);
@@ -245,6 +246,8 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         if ($last instanceof ApiProblemResponse) {
             return $last;
         }
+
+        $data = ArrayUtils::merge($data, $e->getParam('ZF\ContentValidation\ParameterData'), true);
 
         $inputFilter->setData($data);
 
