@@ -18,9 +18,11 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Fixed
 
-- [#87] (https://github.com/zfcampus/zf-content-validation/issues/87) fixes patch with a 
-blank field name causing a 400 error with a stack trace. It will now issue a 400 error with
-the message 'Unrecognized field ""'
+- [#88](https://github.com/zfcampus/zf-content-validation/issues/88) fixes an
+  issue when handling PATCH requests in JSON formats that include a blank field
+  name. Prior to the patch, these would raise a 400 error with a stack trace;
+  with the fix, we now issue a 400 error with the message 'Unrecognized field
+  ""'.
 
 ## 1.3.5 - 2016-08-18
 
