@@ -951,6 +951,44 @@ class ContentValidationListenerTest extends TestCase
         return $response;
     }
 
+    public function testFailsValidationOfPartialSetsForPatchRequestsThatIncludeBlankFieldNames()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services);
+
+        $request = new HttpRequest();
+        $request->setMethod('PATCH');
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams([
+            '' => true,
+        ]);
+
+        $event   = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($event);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
+        $innerProblem = $response->getApiProblem();
+        $this->assertEquals(400, $innerProblem->status);
+        $this->assertEquals('Unrecognized field ""', $innerProblem->detail);
+    }
+
     /**
      * @depends testFailsValidationOfPartialSetsForPatchRequestsThatIncludeUnknownInputs
      */
