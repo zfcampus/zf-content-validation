@@ -470,9 +470,9 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
             $inputFilter->setValidationGroup($validationGroup);
             return $inputFilter->isValid();
         } catch (InputFilterInvalidArgumentException $ex) {
-            $pattern = '/expects a list of valid input names; "(?P<field>[^"]+)" was not found/';
+            $pattern = '/expects a list of valid input names; "(?P<field>[^"]*)" was not found/';
             $matched = preg_match($pattern, $ex->getMessage(), $matches);
-            if (! $matched) {
+            if ($matched === 0) {
                 return new ApiProblemResponse(
                     new ApiProblem(400, $ex)
                 );
