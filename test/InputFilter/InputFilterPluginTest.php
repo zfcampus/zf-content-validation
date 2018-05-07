@@ -6,7 +6,7 @@
 
 namespace ZFTest\ContentValidation\InputFilter;
 
-use PHPUnit_Framework_TestCase as TestCase;
+use PHPUnit\Framework\TestCase;
 use Zend\InputFilter\InputFilterInterface;
 use Zend\Mvc\Controller\AbstractController;
 use Zend\Mvc\MvcEvent;
