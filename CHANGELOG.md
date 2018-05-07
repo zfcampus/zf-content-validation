@@ -8,6 +8,15 @@ All notable changes to this project will be documented in this file, in reverse 
 
 - Nothing.
 
+### Changed
+
+- [#93](https://github.com/zfcampus/zf-content-validation/pull/93) modifies `ContentValidationListener::onRoute()` to set the event parameter
+  `ZF\ContentValidation\ParameterData` with the data it has aggregated prior to emitting the event
+  `ContentValidationListener::EVENT_BEFORE_VALIDATE`. It also now pulls that parameter immediately
+  prior to validating data, merging its value with the original data aggregated, and using the
+  result when validating. This feature allows you to manipulate the data being validated prior
+  to validation; one use case is to inject route matches into the data set to validate.
+
 ### Deprecated
 
 - Nothing.
