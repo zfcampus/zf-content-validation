@@ -10,7 +10,7 @@ use Zend\InputFilter\InputFilter;
 
 class CustomValidationInputFilter extends InputFilter
 {
-    public function isValid()
+    public function isValid($context = null)
     {
         return true;
     }
