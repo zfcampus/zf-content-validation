@@ -2,11 +2,11 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
-## 1.4.0 - TBD
+## 1.4.0 - 2018-05-07
 
 ### Added
 
-- Nothing.
+- [#95](https://github.com/zfcampus/zf-content-validation/pull/95) adds support for PHP 7.1 and 7.2.
 
 ### Changed
 
@@ -23,7 +23,7 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Removed
 
-- Nothing.
+- [#95](https://github.com/zfcampus/zf-content-validation/pull/95) removes support for HHVM.
 
 ### Fixed
 
@@ -32,6 +32,10 @@ All notable changes to this project will be documented in this file, in reverse 
 ## 1.3.6 - 2017-11-06
 
 ### Added
+
+- Nothing.
+
+### Changed
 
 - Nothing.
 

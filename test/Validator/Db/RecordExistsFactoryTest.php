@@ -6,12 +6,13 @@
 
 namespace ZFTest\ContentValidation\Validator\Db;
 
+use PHPUnit\Framework\TestCase;
 use Zend\Db\Adapter\Adapter;
 use Zend\ServiceManager\ServiceManager;
 use Zend\Validator\Db\RecordExists;
 use Zend\Validator\ValidatorPluginManager;
 
-class RecordExistsFactoryTest extends \PHPUnit_Framework_TestCase
+class RecordExistsFactoryTest extends TestCase
 {
     protected $validators;
 
