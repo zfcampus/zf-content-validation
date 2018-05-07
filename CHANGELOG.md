@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Added
 
-- Nothing.
+- [#95](https://github.com/zfcampus/zf-content-validation/pull/95) adds support for PHP 7.1 and 7.2.
 
 ### Changed
 
@@ -33,7 +33,7 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Added
 
-- [#95](https://github.com/zfcampus/zf-content-validation/pull/95) adds support for PHP 7.1 and 7.2.
+- Nothing.
 
 ### Changed
 
