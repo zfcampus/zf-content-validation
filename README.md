@@ -1,7 +1,8 @@
 ZF Content Validation
 =====================
 
-[![Build Status](https://travis-ci.org/zfcampus/zf-content-validation.png)](https://travis-ci.org/zfcampus/zf-content-validation)
+[![Build Status](https://secure.travis-ci.org/zfcampus/zf-content-validation.svg?branch=master)](https://secure.travis-ci.org/zfcampus/zf-content-validation)
+[![Coverage Status](https://coveralls.io/repos/github/zfcampus/zf-content-validation/badge.svg?branch=master)](https://coveralls.io/github/zfcampus/zf-content-validation?branch=master)
 
 Introduction
 ------------
@@ -53,7 +54,7 @@ return [
 ```
 
 Configuration
-=============
+-------------
 
 ### User Configuration
 
@@ -175,8 +176,8 @@ return [
 ];
 ```
 
-ZF2 Events
-==========
+ZF Events
+---------
 
 ### Listeners
 
@@ -217,8 +218,8 @@ $events->listen(ContentValidationListener::EVENT_BEFORE_VALIDATE, function ($e) 
 });
 ```
 
-ZF2 Services
-============
+ZF Services
+-----------
 
 ### Controller Plugins
 
