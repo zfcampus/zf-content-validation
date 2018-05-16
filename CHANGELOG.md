@@ -2,9 +2,62 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
+## 1.4.1 - TBD
+
+### Added
+
+- Nothing.
+
+### Changed
+
+- Nothing.
+
+### Deprecated
+
+- Nothing.
+
+### Removed
+
+- Nothing.
+
+### Fixed
+
+- Nothing.
+
+## 1.4.0 - 2018-05-07
+
+### Added
+
+- [#95](https://github.com/zfcampus/zf-content-validation/pull/95) adds support for PHP 7.1 and 7.2.
+
+### Changed
+
+- [#93](https://github.com/zfcampus/zf-content-validation/pull/93) modifies `ContentValidationListener::onRoute()` to set the event parameter
+  `ZF\ContentValidation\ParameterData` with the data it has aggregated prior to emitting the event
+  `ContentValidationListener::EVENT_BEFORE_VALIDATE`. It also now pulls that parameter immediately
+  prior to validating data, merging its value with the original data aggregated, and using the
+  result when validating. This feature allows you to manipulate the data being validated prior
+  to validation; one use case is to inject route matches into the data set to validate.
+
+### Deprecated
+
+- Nothing.
+
+### Removed
+
+- [#95](https://github.com/zfcampus/zf-content-validation/pull/95) removes support for HHVM.
+
+### Fixed
+
+- Nothing.
+
 ## 1.3.6 - 2017-11-06
 
 ### Added
+
+- Nothing.
+
+### Changed
 
 - Nothing.
 
