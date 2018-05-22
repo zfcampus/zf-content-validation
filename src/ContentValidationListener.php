@@ -374,8 +374,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
     {
         if ($isCollection && isset($this->config[$controllerService][$method . '_COLLECTION'])) {
             return $this->config[$controllerService][$method . '_COLLECTION'];
-        }
-        elseif (isset($this->config[$controllerService][$method])) {
+        } elseif (isset($this->config[$controllerService][$method])) {
             return $this->config[$controllerService][$method];
         }
 
