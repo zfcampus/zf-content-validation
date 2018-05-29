@@ -542,15 +542,88 @@ class ContentValidationListenerTest extends TestCase
     {
         $listener = new ContentValidationListener();
 
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams([]);
+
         $request = new HttpRequest();
         $request->setMethod('POST');
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
-        $event   = new MvcEvent();
+        $event = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
 
         $this->assertNull($listener->onRoute($event));
         $this->assertNull($event->getResponse());
+    }
+    /**
+     * @dataProvider listMethods
+     */
+    public function testSeparateCollectionInputFilterValidation($method)
+    {
+        $services = new ServiceManager();
+        $factory = new InputFilterFactory();
+        $services->setService(
+            'FooValidatorCollection',
+            $factory->createInputFilter(
+                [
+                    'bar' => [
+                        'required' => true,
+                        'name' => 'bar',
+                        'validators' => [
+
+                        ],
+                    ],
+                ]
+            )
+        );
+        $listener = new ContentValidationListener(
+            [
+                'Foo' => [
+                    $method . '_COLLECTION' => 'FooValidatorCollection',
+                ],
+            ],
+            $services,
+            [
+                'Foo' => 'foo_id'
+            ]
+        );
+
+
+        $request = new HttpRequest();
+        $request->setMethod($method);
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
+
+        $params = array_fill(
+            0,
+            3,
+            [
+                'bar' => '',
+            ]
+        );
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event = new MvcEvent();
+        $event->setName('route');
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($event);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
+        $problem = $response->getApiProblem();
+        $asArray = $problem->toArray();
+        $this->assertArrayHasKey('validation_messages', $asArray);
+        $this->assertCount(3, $asArray['validation_messages']);
+
+        $this->assertArrayHasKey('bar', $asArray['validation_messages'][0]);
+        $this->assertInternalType('array', $asArray['validation_messages'][0]['bar']);
+        $this->assertArrayHasKey('bar', $asArray['validation_messages'][1]);
+        $this->assertInternalType('array', $asArray['validation_messages'][1]['bar']);
+        $this->assertArrayHasKey('bar', $asArray['validation_messages'][2]);
+        $this->assertInternalType('array', $asArray['validation_messages'][2]['bar']);
     }
 
     public function testReturnsApiProblemResponseIfContentNegotiationBodyDataIsMissing()
