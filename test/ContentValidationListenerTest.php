@@ -570,9 +570,7 @@ class ContentValidationListenerTest extends TestCase
                     'bar' => [
                         'required' => true,
                         'name' => 'bar',
-                        'validators' => [
-
-                        ],
+                        'validators' => [],
                     ],
                 ]
             )
@@ -584,9 +582,7 @@ class ContentValidationListenerTest extends TestCase
                 ],
             ],
             $services,
-            [
-                'Foo' => 'foo_id'
-            ]
+            ['Foo' => 'foo_id']
         );
 
 
@@ -598,9 +594,7 @@ class ContentValidationListenerTest extends TestCase
         $params = array_fill(
             0,
             3,
-            [
-                'bar' => '',
-            ]
+            ['bar' => '']
         );
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
