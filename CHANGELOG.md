@@ -6,7 +6,8 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Added
 
-- Nothing.
+- [#96](https://github.com/zfcampus/zf-content-validation/pull/96) adds the ability to specify different input filters for _collections_ (versus
+  entities). These may be indicated using `<METHOD>_COLLECTION` within your resource input filter configuration.
 
 ### Changed
 

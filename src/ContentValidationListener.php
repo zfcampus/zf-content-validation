@@ -1,7 +1,7 @@
 <?php
 /**
  * @license   http://opensource.org/licenses/BSD-3-Clause BSD-3-Clause
- * @copyright Copyright (c) 2014-2016 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2014-2018 Zend Technologies USA Inc. (http://www.zend.com)
  */
 
 namespace ZF\ContentValidation;
@@ -174,20 +174,6 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         }
 
         $method = $request->getMethod();
-        $inputFilterService = $this->getInputFilterService($controllerService, $method);
-        if (! $inputFilterService) {
-            return;
-        }
-
-        if (! $this->hasInputFilter($inputFilterService)) {
-            return new ApiProblemResponse(
-                new ApiProblem(
-                    500,
-                    sprintf('Listed input filter "%s" does not exist; cannot validate request', $inputFilterService)
-                )
-            );
-        }
-
         $dataContainer = $e->getParam('ZFContentNegotiationParameterData', false);
         if (! $dataContainer instanceof ParameterDataContainer) {
             return new ApiProblemResponse(
@@ -207,6 +193,21 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         }
 
         $isCollection = $this->isCollection($controllerService, $data, $routeMatches, $request);
+
+        $inputFilterService = $this->getInputFilterService($controllerService, $method, $isCollection);
+
+        if (! $inputFilterService) {
+            return;
+        }
+
+        if (! $this->hasInputFilter($inputFilterService)) {
+            return new ApiProblemResponse(
+                new ApiProblem(
+                    500,
+                    sprintf('Listed input filter "%s" does not exist; cannot validate request', $inputFilterService)
+                )
+            );
+        }
 
         $files = $request->getFiles();
         if (! $isCollection && 0 < count($files)) {
@@ -366,10 +367,15 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
      *
      * @param  string $controllerService
      * @param  string $method
+     * @param  bool $isCollection
      * @return string|false
      */
-    protected function getInputFilterService($controllerService, $method)
+    protected function getInputFilterService($controllerService, $method, $isCollection)
     {
+        if ($isCollection && isset($this->config[$controllerService][$method . '_COLLECTION'])) {
+            return $this->config[$controllerService][$method . '_COLLECTION'];
+        }
+        
         if (isset($this->config[$controllerService][$method])) {
             return $this->config[$controllerService][$method];
         }
