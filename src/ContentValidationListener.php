@@ -58,7 +58,6 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         'GET',
         'HEAD',
         'OPTIONS',
-        'DELETE',
     ];
 
     /**
