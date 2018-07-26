@@ -66,7 +66,6 @@ class ContentValidationListenerTest extends TestCase
             'get'     => ['GET'],
             'head'    => ['HEAD'],
             'options' => ['OPTIONS'],
-            'delete'  => ['DELETE'],
         ];
     }
 
