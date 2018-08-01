@@ -2498,13 +2498,21 @@ class ContentValidationListenerTest extends TestCase
         $this->assertArrayHasKey('0', $response->getApiProblem()->validation_messages);
         $this->assertArrayHasKey('foo', $response->getApiProblem()->validation_messages[0]);
         $this->assertCount(1, $response->getApiProblem()->validation_messages[0]['foo']);
-        $this->assertNotContains('Value is required and can\'t be empty', $response->getApiProblem()->validation_messages[0]['foo']);
-        $this->assertContains('The input must contain only digits', $response->getApiProblem()->validation_messages[0]['foo']);
+        $this->assertNotContains('Value is required and can\'t be empty', 
+                                 $response->getApiProblem()->validation_messages[0]['foo']
+                                );
+        $this->assertContains('The input must contain only digits', 
+                              $response->getApiProblem()->validation_messages[0]['foo']
+                             );
 
         $this->assertArrayHasKey('bar', $response->getApiProblem()->validation_messages[0]);
         $this->assertCount(1, $response->getApiProblem()->validation_messages[0]['bar']);
-        $this->assertNotContains('Value is required and can\'t be empty', $response->getApiProblem()->validation_messages[0]['bar']);
-        $this->assertContains('The input does not match against pattern \'/^[a-z]+/i\'', $response->getApiProblem()->validation_messages[0]['bar']);
+        $this->assertNotContains('Value is required and can\'t be empty', 
+                                 $response->getApiProblem()->validation_messages[0]['bar']
+                                );
+        $this->assertContains('The input does not match against pattern \'/^[a-z]+/i\'', 
+                              $response->getApiProblem()->validation_messages[0]['bar']
+                             );
     }
 
     public function testDeleteRequestWithBody()
@@ -2560,12 +2568,20 @@ class ContentValidationListenerTest extends TestCase
 
         $this->assertArrayHasKey('foo', $response->getApiProblem()->validation_messages);
         $this->assertCount(1, $response->getApiProblem()->validation_messages['foo']);
-        $this->assertNotContains('Value is required and can\'t be empty', $response->getApiProblem()->validation_messages['foo']);
-        $this->assertContains('The input must contain only digits', $response->getApiProblem()->validation_messages['foo']);
+        $this->assertNotContains('Value is required and can\'t be empty', 
+                                 $response->getApiProblem()->validation_messages['foo']
+                                );
+        $this->assertContains('The input must contain only digits', 
+                              $response->getApiProblem()->validation_messages['foo']
+                             );
 
         $this->assertArrayHasKey('bar', $response->getApiProblem()->validation_messages);
         $this->assertCount(1, $response->getApiProblem()->validation_messages['bar']);
-        $this->assertNotContains('Value is required and can\'t be empty', $response->getApiProblem()->validation_messages['bar']);
-        $this->assertContains('The input does not match against pattern \'/^[a-z]+/i\'', $response->getApiProblem()->validation_messages['bar']);
+        $this->assertNotContains('Value is required and can\'t be empty', 
+                                 $response->getApiProblem()->validation_messages['bar']
+                                );
+        $this->assertContains('The input does not match against pattern \'/^[a-z]+/i\'', 
+                              $response->getApiProblem()->validation_messages['bar']
+                             );
     }
 }
