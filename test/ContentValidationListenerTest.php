@@ -2442,4 +2442,109 @@ class ContentValidationListenerTest extends TestCase
     {
         $this->assertEquals('route', $event->getName());
     }
+    
+    public function testCollectionDeleteRequestWithBody()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+
+        $listener = new ContentValidationListener([
+            'Foo' => ['DELETE_COLLECTION' => 'FooValidator'],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
+
+        $request = new HttpRequest();
+        $request->setMethod('DELETE');
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
+
+        $params = [
+            0 => [
+                'foo' => 'abc',
+                'bar' => 123,
+            ],
+        ];
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $e   = new MvcEvent();
+        $e->setRequest($request);
+        $e->setRouteMatch($matches);
+        $e->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($e);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
+        $this->assertEquals(422, $response->getApiProblem()->status);
+    }
+
+    public function testDeleteRequestWithBody()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+
+        $listener = new ContentValidationListener([
+            'Foo' => ['DELETE' => 'FooValidator'],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
+
+        $request = new HttpRequest();
+        $request->setMethod('DELETE');
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
+        $matches->setParam('foo_id', "1");
+
+        $params = [
+            'foo' => 'abc',
+            'bar' => 123,
+        ];
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $e   = new MvcEvent();
+        $e->setRequest($request);
+        $e->setRouteMatch($matches);
+        $e->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($e);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
+        $this->assertEquals(422, $response->getApiProblem()->status);
+    }
 }
