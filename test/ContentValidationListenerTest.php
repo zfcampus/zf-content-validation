@@ -2442,7 +2442,7 @@ class ContentValidationListenerTest extends TestCase
     {
         $this->assertEquals('route', $event->getName());
     }
-    
+
     public function testCollectionDeleteRequestWithBody()
     {
         $services = new ServiceManager();
