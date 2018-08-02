@@ -6,29 +6,9 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Added
 
-- Nothing.
-
-### Changed
-
-- Nothing.
-
-### Deprecated
-
-- Nothing.
-
-### Removed
-
-- Nothing.
-
-### Fixed
-
-- Nothing.
-
-## 1.5.1 - TBD
-
-### Added
-
-- Nothing.
+- [#98](https://github.com/zfcampus/zf-content-validation/pull/98) adds support for specifying controller-specific input filters for
+  `DELETE` requests, using the keys `DELETE` and `DELETE_COLLECTION`. The input
+  filter associated with the key will be applied to the request body.
 
 ### Changed
 
