@@ -66,7 +66,6 @@ class ContentValidationListenerTest extends TestCase
             'get'     => ['GET'],
             'head'    => ['HEAD'],
             'options' => ['OPTIONS'],
-            'delete'  => ['DELETE'],
         ];
     }
 
@@ -2442,5 +2441,133 @@ class ContentValidationListenerTest extends TestCase
     public function testEventNameShouldBeResetToOriginalOnCompletionOfListener($event)
     {
         $this->assertEquals('route', $event->getName());
+    }
+
+    public function testCollectionDeleteRequestWithBody()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+
+        $listener = new ContentValidationListener([
+            'Foo' => ['DELETE_COLLECTION' => 'FooValidator'],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
+
+        $request = new HttpRequest();
+        $request->setMethod('DELETE');
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
+
+        $params = [
+            0 => [
+                'foo' => 'abc',
+                'bar' => 123,
+            ],
+        ];
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $e   = new MvcEvent();
+        $e->setRequest($request);
+        $e->setRouteMatch($matches);
+        $e->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($e);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
+        $this->assertEquals(422, $response->getApiProblem()->status);
+
+        $error_messages = $response->getApiProblem()->validation_messages;
+        $this->assertArrayHasKey('0', $error_messages);
+        $this->assertArrayHasKey('foo', $error_messages[0]);
+        $this->assertCount(1, $error_messages[0]['foo']);
+        $this->assertNotContains('Value is required and can\'t be empty', $error_messages[0]['foo']);
+        $this->assertContains('The input must contain only digits', $error_messages[0]['foo']);
+
+        $this->assertArrayHasKey('bar', $error_messages[0]);
+        $this->assertCount(1, $error_messages[0]['bar']);
+        $this->assertNotContains('Value is required and can\'t be empty', $error_messages[0]['bar']);
+        $this->assertContains('The input does not match against pattern \'/^[a-z]+/i\'', $error_messages[0]['bar']);
+    }
+
+    public function testDeleteRequestWithBody()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+
+        $listener = new ContentValidationListener([
+            'Foo' => ['DELETE' => 'FooValidator'],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
+
+        $request = new HttpRequest();
+        $request->setMethod('DELETE');
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
+        $matches->setParam('foo_id', "1");
+
+        $params = [
+            'foo' => 'abc',
+            'bar' => 123,
+        ];
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $e   = new MvcEvent();
+        $e->setRequest($request);
+        $e->setRouteMatch($matches);
+        $e->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $response = $listener->onRoute($e);
+        $this->assertInstanceOf(ApiProblemResponse::class, $response);
+        $this->assertEquals(422, $response->getApiProblem()->status);
+
+        $error_messages = $response->getApiProblem()->validation_messages;
+        $this->assertArrayHasKey('foo', $error_messages);
+        $this->assertCount(1, $error_messages['foo']);
+        $this->assertNotContains('Value is required and can\'t be empty', $error_messages['foo']);
+        $this->assertContains('The input must contain only digits', $error_messages['foo']);
+
+        $this->assertArrayHasKey('bar', $error_messages);
+        $this->assertCount(1, $error_messages['bar']);
+        $this->assertNotContains('Value is required and can\'t be empty', $error_messages['bar']);
+        $this->assertContains('The input does not match against pattern \'/^[a-z]+/i\'', $error_messages['bar']);
     }
 }
