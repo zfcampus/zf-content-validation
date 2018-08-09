@@ -2603,9 +2603,9 @@ class ContentValidationListenerTest extends TestCase
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams([
-                'foo' => 'not digit data',
-                'bar' => 'valid data',
-            ]);
+            'foo' => 'not digit data',
+            'bar' => 'valid data',
+        ]);
 
         $event = new MvcEvent();
         $event->setName('route');
