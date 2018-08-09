@@ -2602,8 +2602,7 @@ class ContentValidationListenerTest extends TestCase
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
-        $dataParams->setBodyParams(
-            [
+        $dataParams->setBodyParams([
                 'foo' => 'not digit data',
                 'bar' => 'valid data'
             ]
