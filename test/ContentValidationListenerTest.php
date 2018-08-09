@@ -53,7 +53,7 @@ class ContentValidationListenerTest extends TestCase
         $listener = new ContentValidationListener();
 
         $request = new StdlibRequest();
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
 
         $this->assertNull($listener->onRoute($event));
@@ -63,8 +63,8 @@ class ContentValidationListenerTest extends TestCase
     public function nonBodyMethods()
     {
         return [
-            'get' => ['GET'],
-            'head' => ['HEAD'],
+            'get'     => ['GET'],
+            'head'    => ['HEAD'],
             'options' => ['OPTIONS'],
         ];
     }
@@ -73,23 +73,20 @@ class ContentValidationListenerTest extends TestCase
     {
         $className = ContentValidationListener::class;
         $listener = $this->getMockBuilder($className)
-            ->disableOriginalConstructor()
-            ->getMock();
+                ->disableOriginalConstructor()
+                ->getMock();
 
         $listener->expects($this->at(0))->method('addMethodWithoutBody')->with('LINK');
         $listener->expects($this->at(1))->method('addMethodWithoutBody')->with('UNLINK');
 
         $reflectedClass = new \ReflectionClass($className);
         $constructor = $reflectedClass->getConstructor();
-        $constructor->invoke(
-            $listener,
-            [
+        $constructor->invoke($listener, [
             'methods_without_bodies' => [
                 'LINK',
                 'UNLINK',
             ],
-            ]
-        );
+        ]);
     }
 
     /**
@@ -101,7 +98,7 @@ class ContentValidationListenerTest extends TestCase
 
         $request = new HttpRequest();
         $request->setMethod($method);
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
 
         $this->assertNull($listener->onRoute($event));
@@ -111,36 +108,27 @@ class ContentValidationListenerTest extends TestCase
     public function testReturnsNullIfCollectionRequestWithoutBodyIsValid()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['GET' => 'FooValidator'],
             ],
-            $services,
-            ['Foo' => 'foo_id']
-        );
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['GET' => 'FooValidator'],
+        ], $services, ['Foo' => 'foo_id']);
 
         $request = new HttpRequest();
         $request->setMethod('GET');
@@ -148,14 +136,12 @@ class ContentValidationListenerTest extends TestCase
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
-        $dataParams->setQueryParams(
-            [
-                'foo' => 123,
-                'bar' => 'abc',
-            ]
-        );
+        $dataParams->setQueryParams([
+            'foo' => 123,
+            'bar' => 'abc',
+        ]);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -167,36 +153,27 @@ class ContentValidationListenerTest extends TestCase
     public function testReturnsApiProblemResponseIfCollectionRequestWithoutBodyIsInvalid()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['GET' => 'FooValidator'],
             ],
-            $services,
-            ['Foo' => 'foo_id']
-        );
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['GET' => 'FooValidator'],
+        ], $services, ['Foo' => 'foo_id']);
 
         $request = new HttpRequest();
         $request->setMethod('GET');
@@ -204,14 +181,12 @@ class ContentValidationListenerTest extends TestCase
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
-        $dataParams->setQueryParams(
-            [
-                'foo' => 'abc',
-                'bar' => 123,
-            ]
-        );
+        $dataParams->setQueryParams([
+            'foo' => 'abc',
+            'bar' => 123,
+        ]);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -228,36 +203,27 @@ class ContentValidationListenerTest extends TestCase
     public function testReturnsNullIfEntityRequestWithoutBodyIsValid()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['GET' => 'FooValidator'],
             ],
-            $services,
-            ['Foo' => 'foo_id']
-        );
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['GET' => 'FooValidator'],
+        ], $services, ['Foo' => 'foo_id']);
 
         $request = new HttpRequest();
         $request->setMethod('GET');
@@ -265,14 +231,12 @@ class ContentValidationListenerTest extends TestCase
         $matches = $this->createRouteMatch(['controller' => 'Foo', 'foo_id' => 3]);
 
         $dataParams = new ParameterDataContainer();
-        $dataParams->setQueryParams(
-            [
-                'foo' => 123,
-                'bar' => 'abc',
-            ]
-        );
+        $dataParams->setQueryParams([
+            'foo' => 123,
+            'bar' => 'abc',
+        ]);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -284,36 +248,27 @@ class ContentValidationListenerTest extends TestCase
     public function testReturnsApiProblemResponseIfEntityRequestWithoutBodyIsInvalid()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['GET' => 'FooValidator'],
             ],
-            $services,
-            ['Foo' => 'foo_id']
-        );
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['GET' => 'FooValidator'],
+        ], $services, ['Foo' => 'foo_id']);
 
         $request = new HttpRequest();
         $request->setMethod('GET');
@@ -321,14 +276,12 @@ class ContentValidationListenerTest extends TestCase
         $matches = $this->createRouteMatch(['controller' => 'Foo', 'foo_id' => 3]);
 
         $dataParams = new ParameterDataContainer();
-        $dataParams->setQueryParams(
-            [
-                'foo' => 'abc',
-                'bar' => 123,
-            ]
-        );
+        $dataParams->setQueryParams([
+            'foo' => 'abc',
+            'bar' => 123,
+        ]);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -345,29 +298,24 @@ class ContentValidationListenerTest extends TestCase
     public function testReturnsNullIfEntityRequestWithoutBodyIsValidAndUndefinedFieldsAreAllowed()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
                     ],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
+            ],
+        ]));
         $listener = new ContentValidationListener(
             [
                 'Foo' => [
@@ -385,13 +333,11 @@ class ContentValidationListenerTest extends TestCase
         $matches = $this->createRouteMatch(['controller' => 'Foo', 'foo_id' => 3]);
 
         $dataParams = new ParameterDataContainer();
-        $dataParams->setQueryParams(
-            [
-                'foo' => 123,
-                'bar' => 'xyz',
-                'undefined' => 'value',
-            ]
-        );
+        $dataParams->setQueryParams([
+            'foo' => 123,
+            'bar' => 'xyz',
+            'undefined' => 'value',
+        ]);
 
         $event = new MvcEvent();
         $event->setRequest($request);
@@ -405,29 +351,24 @@ class ContentValidationListenerTest extends TestCase
     public function testReturnsApiProblemResponseIfEntityRequestWithoutBodyIsInvalidAndUnknownFieldsAreDisallowed()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
                     ],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
+            ],
+        ]));
         $listener = new ContentValidationListener(
             [
                 'Foo' => [
@@ -445,13 +386,11 @@ class ContentValidationListenerTest extends TestCase
         $matches = $this->createRouteMatch(['controller' => 'Foo', 'foo_id' => 3]);
 
         $dataParams = new ParameterDataContainer();
-        $dataParams->setQueryParams(
-            [
-                'foo' => 123,
-                'bar' => 'xyz',
-                'undefined' => 'value',
-            ]
-        );
+        $dataParams->setQueryParams([
+            'foo' => 123,
+            'bar' => 'xyz',
+            'undefined' => 'value',
+        ]);
 
         $event = new MvcEvent();
         $event->setRequest($request);
@@ -466,29 +405,24 @@ class ContentValidationListenerTest extends TestCase
     public function testReturnsNullIfCollectionRequestWithoutBodyIsValidAndUndefinedFieldsAreAllowed()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
                     ],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
+            ],
+        ]));
         $listener = new ContentValidationListener(
             [
                 'Foo' => [
@@ -506,13 +440,11 @@ class ContentValidationListenerTest extends TestCase
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
-        $dataParams->setQueryParams(
-            [
-                'foo' => 123,
-                'bar' => 'xyz',
-                'undefined' => 'value',
-            ]
-        );
+        $dataParams->setQueryParams([
+            'foo' => 123,
+            'bar' => 'xyz',
+            'undefined' => 'value',
+        ]);
 
         $event = new MvcEvent();
         $event->setRequest($request);
@@ -526,29 +458,24 @@ class ContentValidationListenerTest extends TestCase
     public function testReturnsApiProblemResponseIfCollectionRequestWithoutBodyIsInvalidAndUnknownFieldsAreDisallowed()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
                     ],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
+            ],
+        ]));
         $listener = new ContentValidationListener(
             [
                 'Foo' => [
@@ -566,13 +493,11 @@ class ContentValidationListenerTest extends TestCase
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
-        $dataParams->setQueryParams(
-            [
-                'foo' => 123,
-                'bar' => 'xyz',
-                'undefined' => 'value',
-            ]
-        );
+        $dataParams->setQueryParams([
+            'foo' => 123,
+            'bar' => 'xyz',
+            'undefined' => 'value',
+        ]);
 
         $event = new MvcEvent();
         $event->setRequest($request);
@@ -590,7 +515,7 @@ class ContentValidationListenerTest extends TestCase
 
         $request = new HttpRequest();
         $request->setMethod('POST');
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
 
         $this->assertNull($listener->onRoute($event));
@@ -604,7 +529,7 @@ class ContentValidationListenerTest extends TestCase
         $request = new HttpRequest();
         $request->setMethod('POST');
         $matches = $this->createRouteMatch([]);
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
 
@@ -630,7 +555,6 @@ class ContentValidationListenerTest extends TestCase
         $this->assertNull($listener->onRoute($event));
         $this->assertNull($event->getResponse());
     }
-
     /**
      * @dataProvider listMethods
      */
@@ -699,17 +623,14 @@ class ContentValidationListenerTest extends TestCase
     {
         $services = new ServiceManager();
         $services->setService('FooValidator', new InputFilter());
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
-            ],
-            $services
-        );
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services);
 
         $request = new HttpRequest();
         $request->setMethod('POST');
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
 
@@ -729,19 +650,16 @@ class ContentValidationListenerTest extends TestCase
     public function testReturnsApiProblemResponseIfInputFilterServiceIsInvalid()
     {
         $services = new ServiceManager();
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
-            ],
-            $services
-        );
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services);
 
         $request = new HttpRequest();
         $request->setMethod('POST');
 
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
 
@@ -753,35 +671,27 @@ class ContentValidationListenerTest extends TestCase
     public function testReturnsNothingIfContentIsValid()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
             ],
-            $services
-        );
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services);
 
         $request = new HttpRequest();
         $request->setMethod('POST');
@@ -789,14 +699,12 @@ class ContentValidationListenerTest extends TestCase
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
-        $dataParams->setBodyParams(
-            [
-                'foo' => 123,
-                'bar' => 'abc',
-            ]
-        );
+        $dataParams->setBodyParams([
+            'foo' => 123,
+            'bar' => 'abc',
+        ]);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setName('route');
         $event->setRequest($request);
         $event->setRouteMatch($matches);
@@ -810,35 +718,27 @@ class ContentValidationListenerTest extends TestCase
     public function testReturnsApiProblemResponseIfContentIsInvalid()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
             ],
-            $services
-        );
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services);
 
         $request = new HttpRequest();
         $request->setMethod('POST');
@@ -846,14 +746,12 @@ class ContentValidationListenerTest extends TestCase
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
-        $dataParams->setBodyParams(
-            [
-                'foo' => 'abc',
-                'bar' => 123,
-            ]
-        );
+        $dataParams->setBodyParams([
+            'foo' => 'abc',
+            'bar' => 123,
+        ]);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -889,35 +787,27 @@ class ContentValidationListenerTest extends TestCase
     public function testReturnsApiProblemResponseIfParametersAreMissing()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
             ],
-            $services
-        );
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services);
 
         $request = new HttpRequest();
         $request->setMethod('POST');
@@ -925,13 +815,11 @@ class ContentValidationListenerTest extends TestCase
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
-        $dataParams->setBodyParams(
-            [
-                'foo' => 123,
-            ]
-        );
+        $dataParams->setBodyParams([
+            'foo' => 123,
+        ]);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -944,35 +832,27 @@ class ContentValidationListenerTest extends TestCase
     public function testAllowsValidationOfPartialSetsForPatchRequests()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
             ],
-            $services
-        );
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services);
 
         $request = new HttpRequest();
         $request->setMethod('PATCH');
@@ -980,13 +860,11 @@ class ContentValidationListenerTest extends TestCase
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
-        $dataParams->setBodyParams(
-            [
-                'foo' => 123,
-            ]
-        );
+        $dataParams->setBodyParams([
+            'foo' => 123,
+        ]);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -1000,15 +878,14 @@ class ContentValidationListenerTest extends TestCase
     public function testPatchWithZeroRouteIdDoesNotEmitANoticeAndDoesNotHaveCollectionInputFilterWhenRequestHasABody(
         $verb
     ) {
-
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
+        $factory  = new InputFilterFactory();
         $services->setService(
             'FooValidator',
             $factory->createInputFilter(
                 [
                     'foo' => [
-                        'name' => 'foo',
+                        'name'     => 'foo',
                         'required' => false,
                     ],
                 ]
@@ -1054,13 +931,13 @@ class ContentValidationListenerTest extends TestCase
     public function testPatchWithZeroRouteIdWithNoRequestBodyDoesNotHaveCollectionInputFilter($verb)
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
+        $factory  = new InputFilterFactory();
         $services->setService(
             'FooValidator',
             $factory->createInputFilter(
                 [
                     'foo' => [
-                        'name' => 'foo',
+                        'name'     => 'foo',
                         'required' => false,
                     ],
                 ]
@@ -1097,35 +974,27 @@ class ContentValidationListenerTest extends TestCase
     public function testFailsValidationOfPartialSetsForPatchRequestsThatIncludeUnknownInputs()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
             ],
-            $services
-        );
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services);
 
         $request = new HttpRequest();
         $request->setMethod('PATCH');
@@ -1133,14 +1002,12 @@ class ContentValidationListenerTest extends TestCase
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
-        $dataParams->setBodyParams(
-            [
-                'foo' => 123,
-                'baz' => 'who cares?',
-            ]
-        );
+        $dataParams->setBodyParams([
+            'foo' => 123,
+            'baz' => 'who cares?',
+        ]);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -1153,26 +1020,18 @@ class ContentValidationListenerTest extends TestCase
     public function testFailsValidationOfPartialSetsForPatchRequestsThatIncludeBlankFieldNames()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
                 ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
             ],
-            $services
-        );
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services);
 
         $request = new HttpRequest();
         $request->setMethod('PATCH');
@@ -1180,13 +1039,11 @@ class ContentValidationListenerTest extends TestCase
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
-        $dataParams->setBodyParams(
-            [
-                '' => true,
-            ]
-        );
+        $dataParams->setBodyParams([
+            '' => true,
+        ]);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -1221,30 +1078,22 @@ class ContentValidationListenerTest extends TestCase
     public function testPassingOnlyDataNotInInputFilterShouldInvalidateRequest()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'first_name' => [
-                    'name' => 'first_name',
-                    'required' => true,
-                    'validators' => [
-                        [
-                            'name' => 'Zend\Validator\NotEmpty',
-                            'options' => ['breakchainonfailure' => true],
-                        ],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'first_name' => [
+                'name' => 'first_name',
+                'required' => true,
+                'validators' => [
+                    [
+                        'name' => 'Zend\Validator\NotEmpty',
+                        'options' => ['breakchainonfailure' => true],
                     ],
                 ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
             ],
-            $services
-        );
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services);
 
         $request = new HttpRequest();
         $request->setMethod('POST');
@@ -1252,14 +1101,12 @@ class ContentValidationListenerTest extends TestCase
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
         $dataParams = new ParameterDataContainer();
-        $dataParams->setBodyParams(
-            [
-                'foo' => 'abc',
-                'bar' => 123,
-            ]
-        );
+        $dataParams->setBodyParams([
+            'foo' => 'abc',
+            'bar' => 123,
+        ]);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -1332,54 +1179,39 @@ class ContentValidationListenerTest extends TestCase
     public function configureInputFilters($services)
     {
         $inputFilterFactory = new InputFilterFactory();
-        $services->setService(
-            'PostValidator',
-            $inputFilterFactory->createInputFilter(
-                [
-                'post' => [
-                    'name' => 'post',
-                    'required' => true,
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
+        $services->setService('PostValidator', $inputFilterFactory->createInputFilter([
+            'post' => [
+                'name' => 'post',
+                'required' => true,
+                'validators' => [
+                    ['name' => 'Digits'],
                 ],
-                ]
-            )
-        );
+            ],
+        ]));
 
-        $services->setService(
-            'PatchValidator',
-            $inputFilterFactory->createInputFilter(
-                [
-                'patch' => [
-                    'name' => 'patch',
-                    'required' => true,
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
+        $services->setService('PatchValidator', $inputFilterFactory->createInputFilter([
+            'patch' => [
+                'name' => 'patch',
+                'required' => true,
+                'validators' => [
+                    ['name' => 'Digits'],
                 ],
-                ]
-            )
-        );
+            ],
+        ]));
 
-        $services->setService(
-            'PutValidator',
-            $inputFilterFactory->createInputFilter(
-                [
-                'put' => [
-                    'name' => 'put',
-                    'required' => true,
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
+        $services->setService('PutValidator', $inputFilterFactory->createInputFilter([
+            'put' => [
+                'name' => 'put',
+                'required' => true,
+                'validators' => [
+                    ['name' => 'Digits'],
                 ],
-                ]
-            )
-        );
+            ],
+        ]));
     }
 
     /**
-     * @group        method-specific
+     * @group method-specific
      * @dataProvider httpMethodSpecificInputFilters
      */
     public function testCanFetchHttpMethodSpecificInputFilterWhenValidating(
@@ -1388,20 +1220,16 @@ class ContentValidationListenerTest extends TestCase
         $expectedIsValid,
         $filterName
     ) {
-
         $services = new ServiceManager();
         $this->configureInputFilters($services);
 
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => [
-                    'POST' => 'PostValidator',
-                    'PATCH' => 'PatchValidator',
-                    'PUT' => 'PutValidator',
-                ],
+        $listener = new ContentValidationListener([
+            'Foo' => [
+                'POST'  => 'PostValidator',
+                'PATCH' => 'PatchValidator',
+                'PUT'   => 'PutValidator',
             ],
-            $services
-        );
+        ], $services);
 
         $request = new HttpRequest();
         $request->setMethod($method);
@@ -1411,7 +1239,7 @@ class ContentValidationListenerTest extends TestCase
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($data);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -1438,28 +1266,23 @@ class ContentValidationListenerTest extends TestCase
         $services = new ServiceManager();
         $services->setService('FooValidator', $validator);
 
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
-            ],
-            $services
-        );
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services);
 
-        $files = new Parameters(
-            [
-                'foo' => [
-                    0 => [
-                        'file' => [
-                            'name' => 'foo.txt',
-                            'type' => 'text/plain',
-                            'size' => 1,
-                            'tmp_name' => '/tmp/foo.txt',
-                            'error' => UPLOAD_ERR_OK,
-                        ],
+        $files = new Parameters([
+            'foo' => [
+                0 => [
+                    'file' => [
+                        'name' => 'foo.txt',
+                        'type' => 'text/plain',
+                        'size' => 1,
+                        'tmp_name' => '/tmp/foo.txt',
+                        'error' => UPLOAD_ERR_OK,
                     ],
                 ],
-            ]
-        );
+            ],
+        ]);
         $data = [
             'bar' => 'baz',
             'quz' => 'quuz',
@@ -1478,7 +1301,7 @@ class ContentValidationListenerTest extends TestCase
 
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataContainer);
@@ -1500,52 +1323,43 @@ class ContentValidationListenerTest extends TestCase
     public function listMethods()
     {
         return [
-            'PUT' => ['PUT'],
-            'PATCH' => ['PATCH'],
+            'PUT'    => ['PUT'],
+            'PATCH'  => ['PATCH'],
         ];
     }
 
     /**
      * @dataProvider listMethods
-     * @group        3
+     * @group 3
      */
     public function testCanValidateCollections($method)
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
                     ],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
+            ],
+        ]));
 
         // Create ContentValidationListener with rest controllers populated
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
-            ],
-            $services,
-            [
-                'Foo' => 'foo_id',
-            ]
-        );
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
 
         $request = new HttpRequest();
         $request->setMethod($method);
@@ -1554,18 +1368,14 @@ class ContentValidationListenerTest extends TestCase
 
         $dataParams = new ParameterDataContainer();
 
-        $params = array_fill(
-            0,
-            10,
-            [
+        $params = array_fill(0, 10, [
             'foo' => 123,
             'bar' => 'abc',
-            ]
-        );
+        ]);
 
         $dataParams->setBodyParams($params);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -1575,62 +1385,49 @@ class ContentValidationListenerTest extends TestCase
     }
 
     /**
-     * @group        3
+     * @group 3
      * @dataProvider listMethods
      */
     public function testReturnsApiProblemResponseForCollectionIfAnyFieldsAreInvalid($method)
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
             ],
-            $services,
-            [
-                'Foo' => 'foo_id',
-            ]
-        );
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
 
         $request = new HttpRequest();
         $request->setMethod($method);
 
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
-        $params = array_fill(
-            0,
-            10,
-            [
+        $params = array_fill(0, 10, [
             'foo' => '123a',
-            ]
-        );
+        ]);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -1645,56 +1442,43 @@ class ContentValidationListenerTest extends TestCase
     public function testValidatesPatchToCollectionWhenFieldMissing()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
             ],
-            $services,
-            [
-                'Foo' => 'foo_id',
-            ]
-        );
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
 
         $request = new HttpRequest();
         $request->setMethod('PATCH');
 
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
-        $params = array_fill(
-            0,
-            10,
-            [
+        $params = array_fill(0, 10, [
             'foo' => 123,
-            ]
-        );
+        ]);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -1709,57 +1493,44 @@ class ContentValidationListenerTest extends TestCase
     public function testCanValidatePostedCollections()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
             ],
-            $services,
-            [
-                'Foo' => 'foo_id',
-            ]
-        );
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
 
         $request = new HttpRequest();
         $request->setMethod('POST');
 
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
-        $params = array_fill(
-            0,
-            10,
-            [
+        $params = array_fill(0, 10, [
             'foo' => 123,
             'bar' => 'abc',
-            ]
-        );
+        ]);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -1771,29 +1542,24 @@ class ContentValidationListenerTest extends TestCase
     public function testValidatePostedCollectionsAndAllowedOnlyFieldsFromFilterReturnsApiProblemWithUnrecognizedFields()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
                     ],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
+            ],
+        ]));
         $listener = new ContentValidationListener(
             [
                 'Foo' => [
@@ -1835,7 +1601,7 @@ class ContentValidationListenerTest extends TestCase
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -1851,57 +1617,44 @@ class ContentValidationListenerTest extends TestCase
     public function testReportsValidationFailureForPostedCollection()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
             ],
-            $services,
-            [
-                'Foo' => 'foo_id',
-            ]
-        );
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
 
         $request = new HttpRequest();
         $request->setMethod('POST');
 
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
-        $params = array_fill(
-            0,
-            10,
-            [
+        $params = array_fill(0, 10, [
             'foo' => 'abc',
             'bar' => 123,
-            ]
-        );
+        ]);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -1917,38 +1670,29 @@ class ContentValidationListenerTest extends TestCase
     public function testValidatesPostedEntityWhenCollectionIsPossibleForService()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
             ],
-            $services,
-            [
-                'Foo' => 'foo_id',
-            ]
-        );
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
 
         $request = new HttpRequest();
         $request->setMethod('POST');
@@ -1963,7 +1707,7 @@ class ContentValidationListenerTest extends TestCase
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -1978,38 +1722,29 @@ class ContentValidationListenerTest extends TestCase
     public function testIndicatesInvalidPostedEntityWhenCollectionIsPossibleForService()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
             ],
-            $services,
-            [
-                'Foo' => 'foo_id',
-            ]
-        );
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
 
         $request = new HttpRequest();
         $request->setMethod('POST');
@@ -2024,7 +1759,7 @@ class ContentValidationListenerTest extends TestCase
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -2040,32 +1775,23 @@ class ContentValidationListenerTest extends TestCase
     public function testSaveFilteredDataIntoDataContainer()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooFilter',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'filters' => [
-                        ['name' => 'StringTrim'],
-                    ],
-                ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => [
-                    'input_filter' => 'FooFilter',
-                    'use_raw_data' => false,
+        $factory  = new InputFilterFactory();
+        $services->setService('FooFilter', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'filters' => [
+                    ['name' => 'StringTrim'],
                 ],
             ],
-            $services,
-            [
-                'Foo' => 'foo_id',
-            ]
-        );
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => [
+                'input_filter' => 'FooFilter',
+                'use_raw_data' => false,
+            ],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
 
         $request = new HttpRequest();
         $request->setMethod('POST');
@@ -2105,20 +1831,16 @@ class ContentValidationListenerTest extends TestCase
             ->method('getValues')
             ->will($this->returnValue(['foo' => 'abc']));
 
-        $factory = new InputFilterFactory();
+        $factory  = new InputFilterFactory();
         $services->setService('FooFilter', $inputFilter);
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => [
-                    'input_filter' => 'FooFilter',
-                    'use_raw_data' => false,
-                ],
+        $listener = new ContentValidationListener([
+            'Foo' => [
+                'input_filter' => 'FooFilter',
+                'use_raw_data' => false,
             ],
-            $services,
-            [
-                'Foo' => 'foo_id',
-            ]
-        );
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
 
         $request = new HttpRequest();
         $request->setMethod('POST');
@@ -2148,29 +1870,20 @@ class ContentValidationListenerTest extends TestCase
     public function testSaveRawDataIntoDataContainer()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooFilter',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'filters' => [
-                        ['name' => 'StringTrim'],
-                    ],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooFilter', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'filters' => [
+                    ['name' => 'StringTrim'],
                 ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooFilter', 'use_raw_data' => true],
             ],
-            $services,
-            [
-                'Foo' => 'foo_id',
-            ]
-        );
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooFilter', 'use_raw_data' => true],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
 
         $request = new HttpRequest();
         $request->setMethod('POST');
@@ -2184,7 +1897,7 @@ class ContentValidationListenerTest extends TestCase
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -2199,33 +1912,24 @@ class ContentValidationListenerTest extends TestCase
     public function testTrySaveUnknownData()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooFilter',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'filters' => [
-                        ['name' => 'StringTrim'],
-                    ],
-                ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => [
-                    'input_filter' => 'FooFilter',
-                    'allows_only_fields_in_filter' => true,
-                    'use_raw_data' => false,
+        $factory  = new InputFilterFactory();
+        $services->setService('FooFilter', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'filters' => [
+                    ['name' => 'StringTrim'],
                 ],
             ],
-            $services,
-            [
-                'Foo' => 'foo_id',
-            ]
-        );
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => [
+                'input_filter' => 'FooFilter',
+                'allows_only_fields_in_filter' => true,
+                'use_raw_data' => false,
+            ],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
 
         $request = new HttpRequest();
         $request->setMethod('POST');
@@ -2240,7 +1944,7 @@ class ContentValidationListenerTest extends TestCase
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -2259,33 +1963,24 @@ class ContentValidationListenerTest extends TestCase
     public function testUnknownDataMustBeMergedWithFilteredData()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooFilter',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'filters' => [
-                        ['name' => 'StringTrim'],
-                    ],
-                ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => [
-                    'input_filter' => 'FooFilter',
-                    'allows_only_fields_in_filter' => false,
-                    'use_raw_data' => false,
+        $factory  = new InputFilterFactory();
+        $services->setService('FooFilter', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'filters' => [
+                    ['name' => 'StringTrim'],
                 ],
             ],
-            $services,
-            [
-                'Foo' => 'foo_id',
-            ]
-        );
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => [
+                'input_filter' => 'FooFilter',
+                'allows_only_fields_in_filter' => false,
+                'use_raw_data' => false,
+            ],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
 
         $request = new HttpRequest();
         $request->setMethod('POST');
@@ -2300,7 +1995,7 @@ class ContentValidationListenerTest extends TestCase
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -2317,33 +2012,24 @@ class ContentValidationListenerTest extends TestCase
     public function testUseRawAndAllowOnlyFieldsInFilterData()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooFilter',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'filters' => [
-                        ['name' => 'StringTrim'],
-                    ],
-                ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => [
-                    'input_filter' => 'FooFilter',
-                    'allows_only_fields_in_filter' => true,
-                    'use_raw_data' => true,
+        $factory  = new InputFilterFactory();
+        $services->setService('FooFilter', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'filters' => [
+                    ['name' => 'StringTrim'],
                 ],
             ],
-            $services,
-            [
-                'Foo' => 'foo_id',
-            ]
-        );
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => [
+                'input_filter' => 'FooFilter',
+                'allows_only_fields_in_filter' => true,
+                'use_raw_data' => true,
+            ],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
 
         $request = new HttpRequest();
         $request->setMethod('POST');
@@ -2358,7 +2044,7 @@ class ContentValidationListenerTest extends TestCase
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -2375,20 +2061,16 @@ class ContentValidationListenerTest extends TestCase
     public function testSaveUnknownDataWhenEmptyInputFilter()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
+        $factory  = new InputFilterFactory();
         $services->setService('FooFilter', $factory->createInputFilter([]));
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => [
-                    'input_filter' => 'FooFilter',
-                    'use_raw_data' => false,
-                ],
+        $listener = new ContentValidationListener([
+            'Foo' => [
+                'input_filter' => 'FooFilter',
+                'use_raw_data' => false,
             ],
-            $services,
-            [
-                'Foo' => 'foo_id',
-            ]
-        );
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
 
         $request = new HttpRequest();
         $request->setMethod('POST');
@@ -2403,7 +2085,7 @@ class ContentValidationListenerTest extends TestCase
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -2415,55 +2097,44 @@ class ContentValidationListenerTest extends TestCase
 
     /**
      * @dataProvider listMethods
-     * @group        19
+     * @group 19
      */
     public function testDoesNotAttemptToValidateAnEntityAsACollection($method)
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
                     ],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
+            ],
+        ]));
 
         // Create ContentValidationListener with rest controllers populated
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
-            ],
-            $services,
-            [
-                'Foo' => 'foo_id',
-            ]
-        );
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
 
         $request = new HttpRequest();
         $request->setMethod($method);
 
-        $matches = $this->createRouteMatch(
-            [
-                'controller' => 'Foo',
-                'foo_id' => uniqid(),
-            ]
-        );
+        $matches = $this->createRouteMatch([
+            'controller' => 'Foo',
+            'foo_id'     => uniqid(),
+        ]);
 
         $dataParams = new ParameterDataContainer();
 
@@ -2474,7 +2145,7 @@ class ContentValidationListenerTest extends TestCase
 
         $dataParams->setBodyParams($params);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -2489,38 +2160,29 @@ class ContentValidationListenerTest extends TestCase
     public function testEmptyPostShouldReturnValidationError()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
             ],
-            $services,
-            [
-                'Foo' => 'foo_id',
-            ]
-        );
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
 
         $request = new HttpRequest();
         $request->setMethod('POST');
@@ -2530,7 +2192,7 @@ class ContentValidationListenerTest extends TestCase
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams([]);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -2546,29 +2208,20 @@ class ContentValidationListenerTest extends TestCase
     public function testTriggeredEventBeforeValidate()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
-                ]
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
-            ],
-            $services,
-            [
-                'Foo' => 'foo_id',
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
             ]
-        );
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
 
         $eventManager = new EventManager();
         $listener->setEventManager($eventManager);
@@ -2590,13 +2243,9 @@ class ContentValidationListenerTest extends TestCase
 
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
-        $params = array_fill(
-            0,
-            10,
-            [
+        $params = array_fill(0, 10, [
             'foo' => '123',
-            ]
-        );
+        ]);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
@@ -2617,29 +2266,20 @@ class ContentValidationListenerTest extends TestCase
     public function testTriggeredEventBeforeValidateReturnsApiProblemResponseFromApiProblem()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
-                ]
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
-            ],
-            $services,
-            [
-                'Foo' => 'foo_id',
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
             ]
-        );
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
 
         $eventManager = new EventManager();
         $listener->setEventManager($eventManager);
@@ -2662,18 +2302,14 @@ class ContentValidationListenerTest extends TestCase
 
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
-        $params = array_fill(
-            0,
-            10,
-            [
+        $params = array_fill(0, 10, [
             'foo' => '123',
-            ]
-        );
+        ]);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -2692,29 +2328,20 @@ class ContentValidationListenerTest extends TestCase
     public function testTriggeredEventBeforeValidateReturnsApiProblemResponseFromCallback()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
-                ]
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
-            ],
-            $services,
-            [
-                'Foo' => 'foo_id',
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
             ]
-        );
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
 
         $eventManager = new EventManager();
         $listener->setEventManager($eventManager);
@@ -2737,18 +2364,14 @@ class ContentValidationListenerTest extends TestCase
 
         $matches = $this->createRouteMatch(['controller' => 'Foo']);
 
-        $params = array_fill(
-            0,
-            10,
-            [
+        $params = array_fill(0, 10, [
             'foo' => '123',
-            ]
-        );
+        ]);
 
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
 
-        $event = new MvcEvent();
+        $event   = new MvcEvent();
         $event->setRequest($request);
         $event->setRouteMatch($matches);
         $event->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -2763,7 +2386,7 @@ class ContentValidationListenerTest extends TestCase
     public function indexedFields()
     {
         return [
-            'flat-array' => [[['foo'], ['bar']]],
+            'flat-array'   => [[['foo'], ['bar']]],
             'nested-array' => [[['foo' => 'abc', 'bar' => 'baz']]],
         ];
     }
@@ -2783,18 +2406,15 @@ class ContentValidationListenerTest extends TestCase
     public function testWhenNoFieldsAreDefinedAndValidatorPassesIndexedArrayDataShouldNotBeDuplicated($params)
     {
         $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
         $services->setService('FooFilter', new TestAsset\CustomValidationInputFilter());
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => [
-                    'input_filter' => 'FooFilter',
-                ],
+        $listener = new ContentValidationListener([
+            'Foo' => [
+                'input_filter' => 'FooFilter',
             ],
-            $services,
-            [
-                'Foo' => 'foo_id',
-            ]
-        );
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
 
         $request = new HttpRequest();
         $request->setMethod('POST');
@@ -2826,39 +2446,30 @@ class ContentValidationListenerTest extends TestCase
     public function testCollectionDeleteRequestWithBody()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
-
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['DELETE_COLLECTION' => 'FooValidator'],
             ],
-            $services,
-            [
-                'Foo' => 'foo_id',
-            ]
-        );
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+
+        $listener = new ContentValidationListener([
+            'Foo' => ['DELETE_COLLECTION' => 'FooValidator'],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
 
         $request = new HttpRequest();
         $request->setMethod('DELETE');
@@ -2875,7 +2486,7 @@ class ContentValidationListenerTest extends TestCase
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
 
-        $e = new MvcEvent();
+        $e   = new MvcEvent();
         $e->setRequest($request);
         $e->setRouteMatch($matches);
         $e->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -2900,39 +2511,30 @@ class ContentValidationListenerTest extends TestCase
     public function testDeleteRequestWithBody()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
-                    ],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
                 ],
-                'bar' => [
-                    'name' => 'bar',
-                    'validators' => [
-                        [
-                            'name' => 'Regex',
-                            'options' => ['pattern' => '/^[a-z]+/i'],
-                        ],
-                    ],
-                ],
-                ]
-            )
-        );
-
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['DELETE' => 'FooValidator'],
             ],
-            $services,
-            [
-                'Foo' => 'foo_id',
-            ]
-        );
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+
+        $listener = new ContentValidationListener([
+            'Foo' => ['DELETE' => 'FooValidator'],
+        ], $services, [
+            'Foo' => 'foo_id',
+        ]);
 
         $request = new HttpRequest();
         $request->setMethod('DELETE');
@@ -2948,7 +2550,7 @@ class ContentValidationListenerTest extends TestCase
         $dataParams = new ParameterDataContainer();
         $dataParams->setBodyParams($params);
 
-        $e = new MvcEvent();
+        $e   = new MvcEvent();
         $e->setRequest($request);
         $e->setRouteMatch($matches);
         $e->setParam('ZFContentNegotiationParameterData', $dataParams);
@@ -2972,26 +2574,27 @@ class ContentValidationListenerTest extends TestCase
     public function testReturnsNothingOnDeleteRequestIfContentIsInValidAndValidationSetViaInputFilterKeyword()
     {
         $services = new ServiceManager();
-        $factory = new InputFilterFactory();
-        $services->setService(
-            'FooValidator',
-            $factory->createInputFilter(
-                [
-                'foo' => [
-                    'name' => 'foo',
-                    'validators' => [
-                        ['name' => 'Digits'],
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
                     ],
                 ],
-                ]
-            )
-        );
-        $listener = new ContentValidationListener(
-            [
-                'Foo' => ['input_filter' => 'FooValidator'],
             ],
-            $services
-        );
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services);
 
         $request = new HttpRequest();
         $request->setMethod('DELETE');
@@ -3002,6 +2605,7 @@ class ContentValidationListenerTest extends TestCase
         $dataParams->setBodyParams(
             [
                 'foo' => 'not digit data',
+                'bar' => 'valid data'
             ]
         );
 
@@ -3013,6 +2617,5 @@ class ContentValidationListenerTest extends TestCase
 
         $this->assertNull($listener->onRoute($event));
         $this->assertNull($event->getResponse());
-        return $event;
     }
 }
