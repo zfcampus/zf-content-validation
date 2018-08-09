@@ -379,7 +379,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
             return $this->config[$controllerService][$method];
         }
 
-        if (in_array($method, $this->methodsWithoutBodies) || $method === 'DELETE') {
+        if ($method === 'DELETE' || in_array($method, $this->methodsWithoutBodies)) {
             return false;
         }
 
