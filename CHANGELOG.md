@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
-## 1.6.1 - TBD
+## 1.6.1 - 2018-08-13
 
 ### Added
 
@@ -22,7 +22,13 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Fixed
 
-- Nothing.
+- [#99](https://github.com/zfcampus/zf-content-validation/pull/99) fixes how the `ContentValidationListener` chooses an input filter
+  on `DELETE` requests. Starting in 1.6.0, it erroneously would fall back to the
+  default input filter if no `DELETE` or `DELETE_COLLECTION` input filter was
+  found. However, this was a backwards incompatible change from previous
+  versions, which would not apply the default input filter for `DELETE`
+  requests. As such, a new check was added to provide the previous behavior in
+  such situations.
 
 ## 1.6.0 - 2018-08-02
 

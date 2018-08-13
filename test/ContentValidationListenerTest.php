@@ -2570,4 +2570,50 @@ class ContentValidationListenerTest extends TestCase
         $this->assertNotContains('Value is required and can\'t be empty', $error_messages['bar']);
         $this->assertContains('The input does not match against pattern \'/^[a-z]+/i\'', $error_messages['bar']);
     }
+
+    public function testReturnsNothingOnDeleteRequestIfContentIsInValidAndValidationSetViaInputFilterKeyword()
+    {
+        $services = new ServiceManager();
+        $factory  = new InputFilterFactory();
+        $services->setService('FooValidator', $factory->createInputFilter([
+            'foo' => [
+                'name' => 'foo',
+                'validators' => [
+                    ['name' => 'Digits'],
+                ],
+            ],
+            'bar' => [
+                'name' => 'bar',
+                'validators' => [
+                    [
+                        'name'    => 'Regex',
+                        'options' => ['pattern' => '/^[a-z]+/i'],
+                    ],
+                ],
+            ],
+        ]));
+        $listener = new ContentValidationListener([
+            'Foo' => ['input_filter' => 'FooValidator'],
+        ], $services);
+
+        $request = new HttpRequest();
+        $request->setMethod('DELETE');
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams([
+            'foo' => 'not digit data',
+            'bar' => 'valid data',
+        ]);
+
+        $event = new MvcEvent();
+        $event->setName('route');
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $this->assertNull($listener->onRoute($event));
+        $this->assertNull($event->getResponse());
+    }
 }
