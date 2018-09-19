@@ -9,6 +9,7 @@ namespace ZFTest\ContentValidation;
 use PHPUnit\Framework\TestCase;
 use Zend\EventManager\EventManager;
 use Zend\EventManager\EventManagerInterface;
+use Zend\Filter\StringTrim;
 use Zend\Http\Request as HttpRequest;
 use Zend\InputFilter\CollectionInputFilter;
 use Zend\InputFilter\Factory as InputFilterFactory;
@@ -2093,6 +2094,104 @@ class ContentValidationListenerTest extends TestCase
         $listener->onRoute($event);
 
         $this->assertEquals($params, $dataParams->getBodyParams());
+    }
+
+    public function testFilterEmptyEntriesFromDataByOptionWithNestedData()
+    {
+        $services = new ServiceManager();
+        $factory = new InputFilterFactory();
+
+        $inputFilterA = $factory->createInputFilter(
+            [
+                [
+                    'name'     => 'foo',
+                    'required' => true,
+                    'filters'  => [
+                        ['name' => StringTrim::class],
+                    ],
+                ],
+                [
+                    'name'     => 'bar',
+                    'required' => false,
+                    'filters'  => [
+                        ['name' => StringTrim::class],
+                    ],
+                ],
+                [
+                    'name'     => 'empty',
+                    'required' => false,
+                    'filters'  => [
+                        ['name' => StringTrim::class],
+                    ],
+                ],
+            ]
+        );
+
+        $inputFilterB = $factory->createInputFilter(
+            [
+                [
+                    'name'     => 'empty_field',
+                    'required' => false,
+                    'filters'  => [
+                        ['name' => StringTrim::class],
+                    ],
+                ],
+            ]
+        );
+
+        $inputFilterA->add($inputFilterB, 'empty_array');
+
+        $services->setService('FooFilter', $inputFilterA);
+
+        $listener = new ContentValidationListener(
+            [
+                'Foo' => [
+                    'input_filter'                 => 'FooFilter',
+                    'use_raw_data'                 => false,
+                    'allows_only_fields_in_filter' => true,
+                    'remove_empty_data'            => true,
+                ],
+            ],
+            $services,
+            [
+                'Foo' => 'foo_id',
+            ]
+        );
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
+
+        $params = [
+            'foo'         => ' abc ',
+            'empty'       => null,
+            'empty_array' => [
+                'empty_field' => null,
+            ],
+        ];
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $listener->onRoute($event);
+
+        // field "foo" should show filters have run; value ' abc ' should be filtered with trim to 'abc'
+        // field "bar" will be added by running the filters, should be removed by remoteEmptyData
+        // field "empty" should no longer be here
+        // fieldset "empty_array" should be removed entirely as it's contents are also empty
+
+        $this->assertEquals(
+            [
+                'foo' => 'abc',
+            ],
+            $dataParams->getBodyParams()
+        );
     }
 
     /**
