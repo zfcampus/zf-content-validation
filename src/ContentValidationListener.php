@@ -375,10 +375,8 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
             || (isset($this->config[$controllerService]['remove_empty_data'])
                 && $this->config[$controllerService]['remove_empty_data'] === true)
         ) {
-
             return true;
         }
-
         return false;
     }
 
@@ -390,7 +388,6 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
     {
         $data = array_filter($data);
         if (empty($data)) {
-
             return $data;
         }
 
@@ -407,7 +404,6 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
                 }
             }
         }
-
         return $data;
     }
 
