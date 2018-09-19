@@ -278,6 +278,15 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
             $data = $inputFilter->getValues();
         }
 
+        // Should we remove empty data from received data?
+        // - If no `remove_empty_data` flag is present, do nothing - use data as is
+        // - If `remove_empty_data` flag is present AND is boolean true, then remove
+        //   empty data from current data array
+        $removeEmptyData = $this->shouldRemoveEmptyData($controllerService);
+        if ($removeEmptyData) {
+            $data = $this->removeEmptyData($data);
+        }
+
         // If we don't have an instance of UnknownInputsCapableInterface, or no
         // unknown data is in the input filter, at this point we can just
         // set the current data into the data container.
@@ -354,6 +363,52 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
             return true;
         }
         return false;
+    }
+
+    /**
+     * @param $controllerService
+     * @return bool
+     */
+    protected function shouldRemoveEmptyData($controllerService)
+    {
+        if (! isset($this->config[$controllerService]['remove_empty_data'])
+            || (isset($this->config[$controllerService]['remove_empty_data'])
+                && $this->config[$controllerService]['remove_empty_data'] === true)
+        ) {
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array $data
+     * @return array
+     */
+    protected function removeEmptyData(array $data = [])
+    {
+        $data = array_filter($data);
+        if (empty($data)) {
+
+            return $data;
+        }
+
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                if (empty(array_filter($value))) {
+                    unset($data[$key]);
+                } else {
+                    $data[$key] = $this->removeEmptyData($value);
+                }
+            } else {
+                if (empty($value)) {
+                    unset($data[$key]);
+                }
+            }
+        }
+
+        return $data;
     }
 
     /**
