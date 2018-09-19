@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Added
 
-- Nothing.
+- Added `remove_empty_data` flag - If set & true it causes removal of empty key/value pairs from filtered input data.
 
 ### Changed
 
