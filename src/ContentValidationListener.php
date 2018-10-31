@@ -386,17 +386,32 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
      */
     protected function removeEmptyData(array $data = [])
     {
-        $data = array_filter($data);
+        $removeNull = function ($value) {
+            return ! is_null($value);
+        };
+
+        $data = array_filter($data, $removeNull);
+
         if (empty($data)) {
             return $data;
         }
 
         foreach ($data as $key => $value) {
             if (is_array($value)) {
-                if (empty(array_filter($value))) {
+                if (empty(array_filter($value, $removeNull))) {
                     unset($data[$key]);
                 } else {
-                    $data[$key] = $this->removeEmptyData($value);
+                    $tmpValue = $this->removeEmptyData($value);
+
+                    // Additional check to ensure it's not an empty recursive result
+                    if (empty(array_filter($tmpValue, $removeNull))) {
+                        unset($data[$key]);
+                    } else {
+                        $data[$key] = $tmpValue;
+                    }
+
+                    // Destroy var so it's not accidentally used on a next iteration
+                    unset($tmpValue);
                 }
             } else {
                 if (empty($value)) {
@@ -404,6 +419,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
                 }
             }
         }
+
         return $data;
     }
 
