@@ -397,27 +397,28 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         }
 
         foreach ($data as $key => $value) {
-            if (is_array($value)) {
-                if (empty(array_filter($value, $removeNull))) {
-                    unset($data[$key]);
-                } else {
-                    $tmpValue = $this->removeEmptyData($value);
-
-                    // Additional check to ensure it's not an empty recursive result
-                    if (empty(array_filter($tmpValue, $removeNull))) {
-                        unset($data[$key]);
-                    } else {
-                        $data[$key] = $tmpValue;
-                    }
-
-                    // Destroy var so it's not accidentally used on a next iteration
-                    unset($tmpValue);
-                }
-            } else {
-                if (empty($value)) {
-                    unset($data[$key]);
-                }
+            if ( ! is_array($value) && ! empty($value)) {
+                continue;
             }
+
+            if ( ! is_array($value)) {
+                unset($data[$key]);
+                continue;
+            }
+
+            if (empty(array_filter($value, $removeNull))) {
+                unset($data[$key]);
+                continue;
+            }
+
+            $tmpValue = $this->removeEmptyData($value);
+            // Additional check to ensure it's not an empty recursive result
+            if (empty(array_filter($tmpValue, $removeNull))) {
+                unset($data[$key]);
+                continue;
+            }
+
+            $data[$key] = $tmpValue;
         }
 
         return $data;
