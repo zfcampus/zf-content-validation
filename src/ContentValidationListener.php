@@ -393,7 +393,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
     protected function removeEmptyData($data, $compareTo = [])
     {
         // TODO when bumped to PHP > 7 and strict types above enforced this check may be removed
-        if ( ! is_array($data) || ! is_array($compareTo)) {
+        if (! is_array($data) || ! is_array($compareTo)) {
             throw new TypeError(
                 sprintf(
                     'Expected array\'s for function %s. Received "%s" and "%s".',
@@ -428,11 +428,11 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         }
 
         foreach ($data as $key => $value) {
-            if ( ! is_array($value) && ! empty($value)) {
+            if (! is_array($value) && ! empty($value)) {
                 continue;
             }
 
-            if ( ! is_array($value)) {
+            if (! is_array($value)) {
                 unset($data[$key]);
                 continue;
             }
