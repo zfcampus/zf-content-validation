@@ -99,6 +99,7 @@ behavior:
   - If no `remove_empty_data` flag is present, do nothing - use data as is
   - If `remove_empty_data` flag is present AND is boolean true, then remove
     empty data from current data array
+  - Does not remove empty data if keys matched received data
 
 > ### Validating GET requests
 >
