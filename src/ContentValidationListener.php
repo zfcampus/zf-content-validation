@@ -6,6 +6,7 @@
 
 namespace ZF\ContentValidation;
 
+use TypeError;
 use Zend\EventManager\EventManager;
 use Zend\EventManager\EventManagerAwareInterface;
 use Zend\EventManager\EventManagerInterface;
@@ -183,7 +184,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
             );
         }
 
-        $data = in_array($method, $this->methodsWithoutBodies)
+        $data = $receivedData = in_array($method, $this->methodsWithoutBodies)
             ? $dataContainer->getQueryParams()
             : $dataContainer->getBodyParams();
 
@@ -282,9 +283,10 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         // - If no `remove_empty_data` flag is present, do nothing - use data as is
         // - If `remove_empty_data` flag is present AND is boolean true, then remove
         //   empty data from current data array
+        // - Does not remove empty data if keys matched received data
         $removeEmptyData = $this->shouldRemoveEmptyData($controllerService);
         if ($removeEmptyData) {
-            $data = $this->removeEmptyData($data);
+            $data = $this->removeEmptyData($data, $receivedData);
         }
 
         // If we don't have an instance of UnknownInputsCapableInterface, or no
@@ -381,16 +383,45 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
     }
 
     /**
-     * @param array $data
+     * @param array $data Data to filter null values from
+     * @param array $compareTo Original data, send along to preserve keys/values in $data which are intentional
+     *
      * @return array
      */
-    protected function removeEmptyData(array $data = [])
+    // TODO strict types for PHP > 7 when module gets bumped
+    //    protected function removeEmptyData(array $data, array $compareTo = []) : array
+    protected function removeEmptyData($data, $compareTo = [])
     {
-        $removeNull = function ($value) {
+        // TODO when bumped to PHP > 7 and strict types above enforced this check may be removed
+        if ( ! is_array($data) || ! is_array($compareTo)) {
+            throw new TypeError(
+                sprintf(
+                    'Expected array\'s for function %s. Received "%s" and "%s".',
+                    __METHOD__,
+                    gettype($data),
+                    gettype($compareTo)
+                ),
+                500,
+                __FILE__
+            );
+        }
+
+        // Callback for array_filter() to remove null values (array_filter() removes 'false' values)
+        $removeNull = function ($value, $key = null) use ($compareTo) {
+            // If comparison array is empty, do a straight comparison
+            if (empty($compareTo)) {
+                return ! is_null($value);
+            }
+
+            // If key exists in comparison array, the 'null' value is on purpose, leave as is
+            if (array_key_exists($key, $compareTo)) {
+                return true;
+            }
+
             return ! is_null($value);
         };
 
-        $data = array_filter($data, $removeNull);
+        $data = array_filter($data, $removeNull, ARRAY_FILTER_USE_BOTH);
 
         if (empty($data)) {
             return $data;
@@ -406,14 +437,19 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
                 continue;
             }
 
-            if (empty(array_filter($value, $removeNull))) {
+            if (empty(array_filter($value, $removeNull, ARRAY_FILTER_USE_BOTH))) {
                 unset($data[$key]);
                 continue;
             }
 
-            $tmpValue = $this->removeEmptyData($value);
+            if (array_key_exists($key, $compareTo) && is_array($compareTo[$key])) {
+                $tmpValue = $this->removeEmptyData($value, $compareTo[$key]);
+            } else {
+                $tmpValue = $this->removeEmptyData($value);
+            }
+
             // Additional check to ensure it's not an empty recursive result
-            if (empty(array_filter($tmpValue, $removeNull))) {
+            if (empty(array_filter($tmpValue, $removeNull, ARRAY_FILTER_USE_BOTH))) {
                 unset($data[$key]);
                 continue;
             }
