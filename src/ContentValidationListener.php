@@ -428,7 +428,9 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
         }
 
         foreach ($data as $key => $value) {
-            if (! is_array($value) && ! empty($value)) {
+            if (! is_array($value)
+                && (! empty($value) || (is_bool($value)) && ! in_array($key, $compareTo))
+            ) {
                 continue;
             }
 
