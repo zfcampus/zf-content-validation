@@ -383,34 +383,29 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
     }
 
     /**
+     * @todo strict types for PHP > 7 when module gets bumped
+     *       protected function removeEmptyData(array $data, array $compareTo = []) : array
+     *
      * @param array $data Data to filter null values from
      * @param array $compareTo Original data, send along to preserve keys/values in $data which are intentional
      *
      * @return array
      */
-    // TODO strict types for PHP > 7 when module gets bumped
-    //    protected function removeEmptyData(array $data, array $compareTo = []) : array
-    protected function removeEmptyData($data, $compareTo = [])
+    protected function removeEmptyData(array $data, $compareTo = [])
     {
-        // TODO when bumped to PHP > 7 and strict types above enforced this check may be removed
-        if (! is_array($data) || ! is_array($compareTo)) {
-            throw new TypeError(
-                sprintf(
-                    'Expected array\'s for function %s. Received "%s" and "%s".',
-                    __METHOD__,
-                    gettype($data),
-                    gettype($compareTo)
-                ),
-                500,
-                __FILE__
-            );
-        }
-
+        /**
+         * @todo strict return type
+         *
+         * @param       $value
+         * @param null  $key
+         *
+         * @return bool
+         */
         // Callback for array_filter() to remove null values (array_filter() removes 'false' values)
         $removeNull = function ($value, $key = null) use ($compareTo) {
             // If comparison array is empty, do a straight comparison
             if (empty($compareTo)) {
-                return ! is_null($value);
+                return null !== $value;
             }
 
             // If key exists in comparison array, the 'null' value is on purpose, leave as is
@@ -418,7 +413,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
                 return true;
             }
 
-            return ! is_null($value);
+            return null !== $value;
         };
 
         $data = array_filter($data, $removeNull, ARRAY_FILTER_USE_BOTH);
@@ -444,11 +439,9 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
                 continue;
             }
 
-            if (array_key_exists($key, $compareTo) && is_array($compareTo[$key])) {
-                $tmpValue = $this->removeEmptyData($value, $compareTo[$key]);
-            } else {
-                $tmpValue = $this->removeEmptyData($value);
-            }
+            $tmpValue = (array_key_exists($key, $compareTo) && is_array($compareTo[$key]))
+                ? $this->removeEmptyData($value, $compareTo[$key])
+                : $this->removeEmptyData($value);
 
             // Additional check to ensure it's not an empty recursive result
             if (empty(array_filter($tmpValue, $removeNull, ARRAY_FILTER_USE_BOTH))) {
