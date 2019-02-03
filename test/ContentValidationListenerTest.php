@@ -2096,9 +2096,38 @@ class ContentValidationListenerTest extends TestCase
         $this->assertEquals($params, $dataParams->getBodyParams());
     }
 
-    public function testFilterEmptyEntriesFromDataByOptionWithNestedData()
+    /**
+     * @group 40 removeEmptyData
+     *
+     * @param array $eventParams
+     *
+     * @return MvcEvent
+     */
+    public function createGroup40Event(array $eventParams)
     {
-        $services = new ServiceManager();
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($eventParams);
+
+        $event = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        return $event;
+    }
+
+    /**
+     * @group 40 removeEmptyData
+     *
+     * @return ContentValidationListener
+     */
+    public function createGroup40Listener()
+    {
         $factory = new InputFilterFactory();
 
         $inputFilterA = $factory->createInputFilter(
@@ -2141,9 +2170,10 @@ class ContentValidationListenerTest extends TestCase
 
         $inputFilterA->add($inputFilterB, 'empty_array');
 
+        $services = new ServiceManager();
         $services->setService('FooFilter', $inputFilterA);
 
-        $listener = new ContentValidationListener(
+        return new ContentValidationListener(
             [
                 'Foo' => [
                     'input_filter'                 => 'FooFilter',
@@ -2157,27 +2187,168 @@ class ContentValidationListenerTest extends TestCase
                 'Foo' => 'foo_id',
             ]
         );
+    }
 
-        $request = new HttpRequest();
-        $request->setMethod('POST');
+    /**
+     * @group 40 removeEmptyData
+     *
+     * Flows:
+     * 1 - data is empty, return immediately
+     * 2 - loop key/value - value (is not an array and (not empty or (is a boolean & not in comparison array)))
+     * 3 - loop key/value - value is not an array
+     * 4 - after filtering value, value is empty
+     * 5 - value is an array containing recursive data (subject to 1 through 4)
+     *
+     * This test does #1
+     */
+    public function testFilterEmptyEntriesFromDataByOptionWhenDataEmpty()
+    {
+        // empty array
+        $event = $this->createGroup40Event([]);
 
-        $matches = $this->createRouteMatch(['controller' => 'Foo']);
+        $listener = $this->createGroup40Listener();
+        $listener->onRoute($event);
 
-        $params = [
-            'foo'         => ' abc ',
-            'empty'       => null,
-            'empty_array' => [
-                'empty_field' => null,
+        $this->assertEquals(
+            [],
+            $event->getParam('ZFContentNegotiationParameterData')->getBodyParams()
+        );
+    }
+
+    /**
+     * @group 40 removeEmptyData
+     *
+     * Flows:
+     * 1 - data is empty, return immediately
+     * 2 - loop key/value - value (is not an array and (not empty or (is a boolean & not in comparison array)))
+     * 3 - loop key/value - value is not an array
+     * 4 - after filtering value, value is empty
+     * 5 - value is an array containing recursive data (subject to 1 through 4)
+     *
+     * This test does #2 (twice, once for 'true', once for 'false')
+     */
+    public function testFilterEmptyEntriesFromDataByOptionWhenValueBooleanNotInComparison()
+    {
+        $event = $this->createGroup40Event(
+            [
+                'foo' => true,
+            ]
+        );
+
+        $listener = $this->createGroup40Listener();
+        $listener->onRoute($event);
+
+        $this->assertEquals(
+            [
+                'foo' => true,
             ],
-        ];
+            $event->getParam('ZFContentNegotiationParameterData')->getBodyParams()
+        );
 
-        $dataParams = new ParameterDataContainer();
-        $dataParams->setBodyParams($params);
+        $event2 = $this->createGroup40Event(
+            [
+                'foo' => false,
+            ]
+        );
 
-        $event = new MvcEvent();
-        $event->setRequest($request);
-        $event->setRouteMatch($matches);
-        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+        $listener2 = $this->createGroup40Listener();
+        $listener2->onRoute($event2);
+
+        $this->assertEquals(
+            [
+                'foo' => false,
+            ],
+            $event2->getParam('ZFContentNegotiationParameterData')->getBodyParams()
+        );
+    }
+
+    /**
+     * @group 40 removeEmptyData
+     *
+     * Flows:
+     * 1 - data is empty, return immediately
+     * 2 - loop key/value - value (is not an array and (not empty or (is a boolean & not in comparison array)))
+     * 3 - loop key/value - value is not an array
+     * 4 - after filtering value, value is empty
+     * 5 - value is an array containing recursive data (subject to 1 through 4)
+     *
+     * This test does #3
+     */
+    public function testFilterEmptyEntriesFromDataByOptionWhenValueNotAnArray()
+    {
+        $event = $this->createGroup40Event(
+            [
+                'foo' => ' string ',
+            ]
+        );
+
+        $listener = $this->createGroup40Listener();
+        $listener->onRoute($event);
+
+        $this->assertEquals(
+            [
+                'foo' => 'string',
+            ],
+            $event->getParam('ZFContentNegotiationParameterData')->getBodyParams()
+        );
+    }
+
+    /**
+     * @group 40 removeEmptyData
+     *
+     * Flows:
+     * 1 - data is empty, return immediately
+     * 2 - loop key/value - value (is not an array and (not empty or (is a boolean & not in comparison array)))
+     * 3 - loop key/value - value is not an array
+     * 4 - after filtering value, value is empty
+     * 5 - value is an array containing recursive data (subject to 1 through 4)
+     *
+     * This test does #4
+     */
+    public function testFilterEmptyEntriesFromDataByOptionWhenValueEmptyAfterFilter()
+    {
+        $event = $this->createGroup40Event(
+            [
+                'foo' => [
+                    'test' => []
+                ],
+            ]
+        );
+
+        $listener = $this->createGroup40Listener();
+        $listener->onRoute($event);
+
+        $this->assertEquals(
+            [],
+            $event->getParam('ZFContentNegotiationParameterData')->getBodyParams()
+        );
+    }
+
+    /**
+     * @group 40 removeEmptyData
+     *
+     * Flows:
+     * 1 - data is empty, return immediately
+     * 2 - loop key/value - value (is not an array and (not empty or (is a boolean & not in comparison array)))
+     * 3 - loop key/value - value is not an array
+     * 4 - after filtering value, value is empty
+     * 5 - value is an array containing recursive data (subject to 1 through 4)
+     *
+     * This test does #5
+     */
+    public function testFilterEmptyEntriesFromDataByOptionWithNestedData()
+    {
+        $event = $this->createGroup40Event(
+            [
+                'foo'         => ' abc ',
+                'empty'       => null,
+                'empty_array' => [
+                    'empty_field' => null,
+                ],
+            ]
+        );
+
+        $listener = $this->createGroup40Listener();
 
         $listener->onRoute($event);
 
@@ -2190,7 +2361,7 @@ class ContentValidationListenerTest extends TestCase
             [
                 'foo' => 'abc',
             ],
-            $dataParams->getBodyParams()
+            $event->getParam('ZFContentNegotiationParameterData')->getBodyParams()
         );
     }
 
