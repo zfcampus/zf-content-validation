@@ -395,13 +395,13 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
     {
         /**
          * @todo strict return type
+         * Callback for array_filter() to remove null values (array_filter() removes 'false' values)
          *
          * @param       $value
          * @param null  $key
          *
          * @return bool
          */
-        // Callback for array_filter() to remove null values (array_filter() removes 'false' values)
         $removeNull = function ($value, $key = null) use ($compareTo) {
             // If comparison array is empty, do a straight comparison
             if (empty($compareTo)) {
