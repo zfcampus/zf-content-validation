@@ -6,7 +6,6 @@
 
 namespace ZF\ContentValidation;
 
-use TypeError;
 use Zend\EventManager\EventManager;
 use Zend\EventManager\EventManagerAwareInterface;
 use Zend\EventManager\EventManagerInterface;
@@ -368,14 +367,13 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
     }
 
     /**
-     * @param $controllerService
+     * @param string $controllerService
      * @return bool
      */
     protected function shouldRemoveEmptyData($controllerService)
     {
         if (! isset($this->config[$controllerService]['remove_empty_data'])
-            || (isset($this->config[$controllerService]['remove_empty_data'])
-                && $this->config[$controllerService]['remove_empty_data'] === true)
+            || $this->config[$controllerService]['remove_empty_data'] === true
         ) {
             return true;
         }
@@ -383,23 +381,18 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
     }
 
     /**
-     * @todo strict types for PHP > 7 when module gets bumped
-     *       protected function removeEmptyData(array $data, array $compareTo = []) : array
-     *
      * @param array $data Data to filter null values from
-     * @param array $compareTo Original data, send along to preserve keys/values in $data which are intentional
-     *
+     * @param array $compareTo Original data, send along to preserve
+     *     keys/values in $data which are intentional
      * @return array
      */
-    protected function removeEmptyData(array $data, $compareTo = [])
+    protected function removeEmptyData(array $data, array $compareTo = [])
     {
         /**
-         * @todo strict return type
          * Callback for array_filter() to remove null values (array_filter() removes 'false' values)
          *
-         * @param       $value
+         * @param mixed $value
          * @param null  $key
-         *
          * @return bool
          */
         $removeNull = function ($value, $key = null) use ($compareTo) {
@@ -424,7 +417,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
 
         foreach ($data as $key => $value) {
             if (! is_array($value)
-                && (! empty($value) || (is_bool($value)) && ! in_array($key, $compareTo))
+                && (! empty($value) || is_bool($value) && ! in_array($key, $compareTo))
             ) {
                 continue;
             }
@@ -439,7 +432,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
                 continue;
             }
 
-            $tmpValue = (array_key_exists($key, $compareTo) && is_array($compareTo[$key]))
+            $tmpValue = array_key_exists($key, $compareTo) && is_array($compareTo[$key])
                 ? $this->removeEmptyData($value, $compareTo[$key])
                 : $this->removeEmptyData($value);
 
