@@ -183,7 +183,7 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
             );
         }
 
-        $data = in_array($method, $this->methodsWithoutBodies)
+        $data = $receivedData = in_array($method, $this->methodsWithoutBodies)
             ? $dataContainer->getQueryParams()
             : $dataContainer->getBodyParams();
 
@@ -278,6 +278,16 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
             $data = $inputFilter->getValues();
         }
 
+        // Should we remove empty data from received data?
+        // - If no `remove_empty_data` flag is present, do nothing - use data as is
+        // - If `remove_empty_data` flag is present AND is boolean true, then remove
+        //   empty data from current data array
+        // - Does not remove empty data if keys matched received data
+        $removeEmptyData = $this->shouldRemoveEmptyData($controllerService);
+        if ($removeEmptyData) {
+            $data = $this->removeEmptyData($data, $receivedData);
+        }
+
         // If we don't have an instance of UnknownInputsCapableInterface, or no
         // unknown data is in the input filter, at this point we can just
         // set the current data into the data container.
@@ -354,6 +364,88 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
             return true;
         }
         return false;
+    }
+
+    /**
+     * @param string $controllerService
+     * @return bool
+     */
+    protected function shouldRemoveEmptyData($controllerService)
+    {
+        if (! isset($this->config[$controllerService]['remove_empty_data'])
+            || $this->config[$controllerService]['remove_empty_data'] === true
+        ) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @param array $data Data to filter null values from
+     * @param array $compareTo Original data, send along to preserve
+     *     keys/values in $data which are intentional
+     * @return array
+     */
+    protected function removeEmptyData(array $data, array $compareTo = [])
+    {
+        /**
+         * Callback for array_filter() to remove null values (array_filter() removes 'false' values)
+         *
+         * @param mixed $value
+         * @param null  $key
+         * @return bool
+         */
+        $removeNull = function ($value, $key = null) use ($compareTo) {
+            // If comparison array is empty, do a straight comparison
+            if (empty($compareTo)) {
+                return null !== $value;
+            }
+
+            // If key exists in comparison array, the 'null' value is on purpose, leave as is
+            if (array_key_exists($key, $compareTo)) {
+                return true;
+            }
+
+            return null !== $value;
+        };
+
+        $data = array_filter($data, $removeNull, ARRAY_FILTER_USE_BOTH);
+
+        if (empty($data)) {
+            return $data;
+        }
+
+        foreach ($data as $key => $value) {
+            if (! is_array($value)
+                && (! empty($value) || is_bool($value) && ! in_array($key, $compareTo))
+            ) {
+                continue;
+            }
+
+            if (! is_array($value)) {
+                unset($data[$key]);
+                continue;
+            }
+
+            if (empty(array_filter($value, $removeNull, ARRAY_FILTER_USE_BOTH))) {
+                unset($data[$key]);
+                continue;
+            }
+
+            $tmpValue = array_key_exists($key, $compareTo) && is_array($compareTo[$key])
+                ? $this->removeEmptyData($value, $compareTo[$key])
+                : $this->removeEmptyData($value);
+
+            // Additional check to ensure it's not an empty recursive result
+            if (empty(array_filter($tmpValue, $removeNull, ARRAY_FILTER_USE_BOTH))) {
+                unset($data[$key]);
+                continue;
+            }
+
+            $data[$key] = $tmpValue;
+        }
+
+        return $data;
     }
 
     /**

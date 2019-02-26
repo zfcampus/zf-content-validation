@@ -9,6 +9,7 @@ namespace ZFTest\ContentValidation;
 use PHPUnit\Framework\TestCase;
 use Zend\EventManager\EventManager;
 use Zend\EventManager\EventManagerInterface;
+use Zend\Filter\StringTrim;
 use Zend\Http\Request as HttpRequest;
 use Zend\InputFilter\CollectionInputFilter;
 use Zend\InputFilter\Factory as InputFilterFactory;
@@ -2093,6 +2094,252 @@ class ContentValidationListenerTest extends TestCase
         $listener->onRoute($event);
 
         $this->assertEquals($params, $dataParams->getBodyParams());
+    }
+
+    /**
+     * @group 40 removeEmptyData
+     * @param array $eventParams
+     * @return MvcEvent
+     */
+    public function createGroup40Event(array $eventParams)
+    {
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($eventParams);
+
+        $event = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        return $event;
+    }
+
+    /**
+     * @group 40 removeEmptyData
+     * @return ContentValidationListener
+     */
+    public function createGroup40Listener()
+    {
+        $factory = new InputFilterFactory();
+
+        $inputFilterA = $factory->createInputFilter([
+            [
+                'name'     => 'foo',
+                'required' => true,
+                'filters'  => [
+                    ['name' => StringTrim::class],
+                ],
+            ],
+            [
+                'name'     => 'bar',
+                'required' => false,
+                'filters'  => [
+                    ['name' => StringTrim::class],
+                ],
+            ],
+            [
+                'name'     => 'empty',
+                'required' => false,
+                'filters'  => [
+                    ['name' => StringTrim::class],
+                ],
+            ],
+        ]);
+
+        $inputFilterB = $factory->createInputFilter([
+            [
+                'name'     => 'empty_field',
+                'required' => false,
+                'filters'  => [
+                    ['name' => StringTrim::class],
+                ],
+            ],
+        ]);
+
+        $inputFilterA->add($inputFilterB, 'empty_array');
+
+        $services = new ServiceManager();
+        $services->setService('FooFilter', $inputFilterA);
+
+        return new ContentValidationListener(
+            [
+                'Foo' => [
+                    'input_filter'                 => 'FooFilter',
+                    'use_raw_data'                 => false,
+                    'allows_only_fields_in_filter' => true,
+                    'remove_empty_data'            => true,
+                ],
+            ],
+            $services,
+            [
+                'Foo' => 'foo_id',
+            ]
+        );
+    }
+
+    /**
+     * Flows:
+     * 1 - data is empty, return immediately
+     * 2 - loop key/value - value (is not an array and (not empty or (is a boolean & not in comparison array)))
+     * 3 - loop key/value - value is not an array
+     * 4 - after filtering value, value is empty
+     * 5 - value is an array containing recursive data (subject to 1 through 4)
+     *
+     * This test does #1
+     *
+     * @group 40 removeEmptyData
+     */
+    public function testFilterEmptyEntriesFromDataByOptionWhenDataEmpty()
+    {
+        // empty array
+        $event = $this->createGroup40Event([]);
+
+        $listener = $this->createGroup40Listener();
+        $listener->onRoute($event);
+
+        $this->assertEquals(
+            [],
+            $event->getParam('ZFContentNegotiationParameterData')->getBodyParams()
+        );
+    }
+
+    public function booleanProvider()
+    {
+        yield 'true'  => [true];
+        yield 'false' => [false];
+    }
+
+    /**
+     * Flows:
+     * 1 - data is empty, return immediately
+     * 2 - loop key/value - value (is not an array and (not empty or (is a boolean & not in comparison array)))
+     * 3 - loop key/value - value is not an array
+     * 4 - after filtering value, value is empty
+     * 5 - value is an array containing recursive data (subject to 1 through 4)
+     *
+     * This test does #2 (twice, once for 'true', once for 'false')
+     *
+     * @group 40 removeEmptyData
+     * @dataProvider booleanProvider
+     * @param bool $value
+     */
+    public function testFilterEmptyEntriesFromDataByOptionWhenValueBooleanNotInComparison($value)
+    {
+        $event = $this->createGroup40Event([
+            'foo' => $value,
+        ]);
+
+        $listener = $this->createGroup40Listener();
+        $listener->onRoute($event);
+
+        $this->assertEquals(
+            [
+                'foo' => $value,
+            ],
+            $event->getParam('ZFContentNegotiationParameterData')->getBodyParams()
+        );
+    }
+
+    /**
+     * Flows:
+     * 1 - data is empty, return immediately
+     * 2 - loop key/value - value (is not an array and (not empty or (is a boolean & not in comparison array)))
+     * 3 - loop key/value - value is not an array
+     * 4 - after filtering value, value is empty
+     * 5 - value is an array containing recursive data (subject to 1 through 4)
+     *
+     * This test does #3
+     *
+     * @group 40 removeEmptyData
+     */
+    public function testFilterEmptyEntriesFromDataByOptionWhenValueNotAnArray()
+    {
+        $event = $this->createGroup40Event([
+            'foo' => ' string ',
+        ]);
+
+        $listener = $this->createGroup40Listener();
+        $listener->onRoute($event);
+
+        $this->assertEquals(
+            [
+                'foo' => 'string',
+            ],
+            $event->getParam('ZFContentNegotiationParameterData')->getBodyParams()
+        );
+    }
+
+    /**
+     * Flows:
+     * 1 - data is empty, return immediately
+     * 2 - loop key/value - value (is not an array and (not empty or (is a boolean & not in comparison array)))
+     * 3 - loop key/value - value is not an array
+     * 4 - after filtering value, value is empty
+     * 5 - value is an array containing recursive data (subject to 1 through 4)
+     *
+     * This test does #4
+     *
+     * @group 40 removeEmptyData
+     */
+    public function testFilterEmptyEntriesFromDataByOptionWhenValueEmptyAfterFilter()
+    {
+        $event = $this->createGroup40Event([
+            'foo' => [
+                'test' => [],
+            ],
+        ]);
+
+        $listener = $this->createGroup40Listener();
+        $listener->onRoute($event);
+
+        $this->assertEquals(
+            [],
+            $event->getParam('ZFContentNegotiationParameterData')->getBodyParams()
+        );
+    }
+
+    /**
+     * Flows:
+     * 1 - data is empty, return immediately
+     * 2 - loop key/value - value (is not an array and (not empty or (is a boolean & not in comparison array)))
+     * 3 - loop key/value - value is not an array
+     * 4 - after filtering value, value is empty
+     * 5 - value is an array containing recursive data (subject to 1 through 4)
+     *
+     * This test does #5
+     *
+     * @group 40 removeEmptyData
+     */
+    public function testFilterEmptyEntriesFromDataByOptionWithNestedData()
+    {
+        $event = $this->createGroup40Event([
+            'foo'         => ' abc ',
+            'empty'       => null,
+            'empty_array' => [
+                'empty_field' => null,
+            ],
+        ]);
+
+        $listener = $this->createGroup40Listener();
+
+        $listener->onRoute($event);
+
+        // field "foo" should show filters have run; value ' abc ' should be filtered with trim to 'abc'
+        // field "bar" will be added by running the filters, should be removed by remoteEmptyData
+        // field "empty" should no longer be here
+        // fieldset "empty_array" should be removed entirely as it's contents are also empty
+
+        $this->assertEquals(
+            [
+                'foo' => 'abc',
+            ],
+            $event->getParam('ZFContentNegotiationParameterData')->getBodyParams()
+        );
     }
 
     /**

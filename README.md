@@ -94,6 +94,12 @@ behavior:
 - `allows_only_fields_in_filter`: if present, and `use_raw_data` is boolean false, the value of this
   flag will define whether or not additional fields present in the payload will be merged with the
   filtered data.
+  
+- `remove_empty_data`: Should we remove empty data from received data?
+  - If no `remove_empty_data` flag is present, do nothing - use data as is
+  - If `remove_empty_data` flag is present AND is boolean true, then remove
+    empty data from current data array
+  - Does not remove empty data if keys matched received data
 
 > ### Validating GET requests
 >

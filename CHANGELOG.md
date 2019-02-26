@@ -2,11 +2,12 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
-## 1.6.2 - TBD
+## 1.7.0 - 2019-02-26
 
 ### Added
 
-- Nothing.
+- [#102](https://github.com/zfcampus/zf-content-validation/pull/102) adds the configuration flag `remove_empty_data`. If set and boolean 
+  `true`, it causes removal of empty key/value pairs from filtered input data.
 
 ### Changed
 
