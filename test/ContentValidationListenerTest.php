@@ -2098,9 +2098,7 @@ class ContentValidationListenerTest extends TestCase
 
     /**
      * @group 40 removeEmptyData
-     *
      * @param array $eventParams
-     *
      * @return MvcEvent
      */
     public function createGroup40Event(array $eventParams)
@@ -2123,50 +2121,45 @@ class ContentValidationListenerTest extends TestCase
 
     /**
      * @group 40 removeEmptyData
-     *
      * @return ContentValidationListener
      */
     public function createGroup40Listener()
     {
         $factory = new InputFilterFactory();
 
-        $inputFilterA = $factory->createInputFilter(
+        $inputFilterA = $factory->createInputFilter([
             [
-                [
-                    'name'     => 'foo',
-                    'required' => true,
-                    'filters'  => [
-                        ['name' => StringTrim::class],
-                    ],
+                'name'     => 'foo',
+                'required' => true,
+                'filters'  => [
+                    ['name' => StringTrim::class],
                 ],
-                [
-                    'name'     => 'bar',
-                    'required' => false,
-                    'filters'  => [
-                        ['name' => StringTrim::class],
-                    ],
+            ],
+            [
+                'name'     => 'bar',
+                'required' => false,
+                'filters'  => [
+                    ['name' => StringTrim::class],
                 ],
-                [
-                    'name'     => 'empty',
-                    'required' => false,
-                    'filters'  => [
-                        ['name' => StringTrim::class],
-                    ],
+            ],
+            [
+                'name'     => 'empty',
+                'required' => false,
+                'filters'  => [
+                    ['name' => StringTrim::class],
                 ],
-            ]
-        );
+            ],
+        ]);
 
-        $inputFilterB = $factory->createInputFilter(
+        $inputFilterB = $factory->createInputFilter([
             [
-                [
-                    'name'     => 'empty_field',
-                    'required' => false,
-                    'filters'  => [
-                        ['name' => StringTrim::class],
-                    ],
+                'name'     => 'empty_field',
+                'required' => false,
+                'filters'  => [
+                    ['name' => StringTrim::class],
                 ],
-            ]
-        );
+            ],
+        ]);
 
         $inputFilterA->add($inputFilterB, 'empty_array');
 
@@ -2190,8 +2183,6 @@ class ContentValidationListenerTest extends TestCase
     }
 
     /**
-     * @group 40 removeEmptyData
-     *
      * Flows:
      * 1 - data is empty, return immediately
      * 2 - loop key/value - value (is not an array and (not empty or (is a boolean & not in comparison array)))
@@ -2200,6 +2191,8 @@ class ContentValidationListenerTest extends TestCase
      * 5 - value is an array containing recursive data (subject to 1 through 4)
      *
      * This test does #1
+     *
+     * @group 40 removeEmptyData
      */
     public function testFilterEmptyEntriesFromDataByOptionWhenDataEmpty()
     {
@@ -2215,9 +2208,13 @@ class ContentValidationListenerTest extends TestCase
         );
     }
 
+    public function booleanProvider()
+    {
+        yield 'true'  => [true];
+        yield 'false' => [false];
+    }
+
     /**
-     * @group 40 removeEmptyData
-     *
      * Flows:
      * 1 - data is empty, return immediately
      * 2 - loop key/value - value (is not an array and (not empty or (is a boolean & not in comparison array)))
@@ -2226,45 +2223,29 @@ class ContentValidationListenerTest extends TestCase
      * 5 - value is an array containing recursive data (subject to 1 through 4)
      *
      * This test does #2 (twice, once for 'true', once for 'false')
+     *
+     * @group 40 removeEmptyData
+     * @dataProvider booleanProvider
+     * @param bool $value
      */
-    public function testFilterEmptyEntriesFromDataByOptionWhenValueBooleanNotInComparison()
+    public function testFilterEmptyEntriesFromDataByOptionWhenValueBooleanNotInComparison($value)
     {
-        $event = $this->createGroup40Event(
-            [
-                'foo' => true,
-            ]
-        );
+        $event = $this->createGroup40Event([
+            'foo' => $value,
+        ]);
 
         $listener = $this->createGroup40Listener();
         $listener->onRoute($event);
 
         $this->assertEquals(
             [
-                'foo' => true,
+                'foo' => $value,
             ],
             $event->getParam('ZFContentNegotiationParameterData')->getBodyParams()
-        );
-
-        $event2 = $this->createGroup40Event(
-            [
-                'foo' => false,
-            ]
-        );
-
-        $listener2 = $this->createGroup40Listener();
-        $listener2->onRoute($event2);
-
-        $this->assertEquals(
-            [
-                'foo' => false,
-            ],
-            $event2->getParam('ZFContentNegotiationParameterData')->getBodyParams()
         );
     }
 
     /**
-     * @group 40 removeEmptyData
-     *
      * Flows:
      * 1 - data is empty, return immediately
      * 2 - loop key/value - value (is not an array and (not empty or (is a boolean & not in comparison array)))
@@ -2273,14 +2254,14 @@ class ContentValidationListenerTest extends TestCase
      * 5 - value is an array containing recursive data (subject to 1 through 4)
      *
      * This test does #3
+     *
+     * @group 40 removeEmptyData
      */
     public function testFilterEmptyEntriesFromDataByOptionWhenValueNotAnArray()
     {
-        $event = $this->createGroup40Event(
-            [
-                'foo' => ' string ',
-            ]
-        );
+        $event = $this->createGroup40Event([
+            'foo' => ' string ',
+        ]);
 
         $listener = $this->createGroup40Listener();
         $listener->onRoute($event);
@@ -2294,8 +2275,6 @@ class ContentValidationListenerTest extends TestCase
     }
 
     /**
-     * @group 40 removeEmptyData
-     *
      * Flows:
      * 1 - data is empty, return immediately
      * 2 - loop key/value - value (is not an array and (not empty or (is a boolean & not in comparison array)))
@@ -2304,16 +2283,16 @@ class ContentValidationListenerTest extends TestCase
      * 5 - value is an array containing recursive data (subject to 1 through 4)
      *
      * This test does #4
+     *
+     * @group 40 removeEmptyData
      */
     public function testFilterEmptyEntriesFromDataByOptionWhenValueEmptyAfterFilter()
     {
-        $event = $this->createGroup40Event(
-            [
-                'foo' => [
-                    'test' => []
-                ],
-            ]
-        );
+        $event = $this->createGroup40Event([
+            'foo' => [
+                'test' => [],
+            ],
+        ]);
 
         $listener = $this->createGroup40Listener();
         $listener->onRoute($event);
@@ -2325,8 +2304,6 @@ class ContentValidationListenerTest extends TestCase
     }
 
     /**
-     * @group 40 removeEmptyData
-     *
      * Flows:
      * 1 - data is empty, return immediately
      * 2 - loop key/value - value (is not an array and (not empty or (is a boolean & not in comparison array)))
@@ -2335,18 +2312,18 @@ class ContentValidationListenerTest extends TestCase
      * 5 - value is an array containing recursive data (subject to 1 through 4)
      *
      * This test does #5
+     *
+     * @group 40 removeEmptyData
      */
     public function testFilterEmptyEntriesFromDataByOptionWithNestedData()
     {
-        $event = $this->createGroup40Event(
-            [
-                'foo'         => ' abc ',
-                'empty'       => null,
-                'empty_array' => [
-                    'empty_field' => null,
-                ],
-            ]
-        );
+        $event = $this->createGroup40Event([
+            'foo'         => ' abc ',
+            'empty'       => null,
+            'empty_array' => [
+                'empty_field' => null,
+            ],
+        ]);
 
         $listener = $this->createGroup40Listener();
 
