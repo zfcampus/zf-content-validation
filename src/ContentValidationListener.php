@@ -372,8 +372,8 @@ class ContentValidationListener implements ListenerAggregateInterface, EventMana
      */
     protected function shouldRemoveEmptyData($controllerService)
     {
-        if (! isset($this->config[$controllerService]['remove_empty_data'])
-            || $this->config[$controllerService]['remove_empty_data'] === true
+        if (isset($this->config[$controllerService]['remove_empty_data'])
+            && $this->config[$controllerService]['remove_empty_data'] === true
         ) {
             return true;
         }

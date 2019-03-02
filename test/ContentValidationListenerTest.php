@@ -2863,4 +2863,51 @@ class ContentValidationListenerTest extends TestCase
         $this->assertNull($listener->onRoute($event));
         $this->assertNull($event->getResponse());
     }
+
+    /**
+     * @see https://github.com/zfcampus/zf-content-validation/issues/104
+     */
+    public function testRemoveEmptyDataIsNotSetSoEmptyDataAreNotRemoved()
+    {
+        $services = new ServiceManager();
+        $factory = new InputFilterFactory();
+        $services->setService('FooFilter', $factory->createInputFilter([]));
+
+        $listener = new ContentValidationListener([
+            'Foo' => [
+                'input_filter' => 'FooFilter',
+                'use_raw_data' => true,
+            ],
+        ], $services, []);
+
+        $request = new HttpRequest();
+        $request->setMethod('POST');
+
+        $matches = $this->createRouteMatch(['controller' => 'Foo']);
+        $params = [
+            'str' => '',
+            'foo' => null,
+            'bar' => true,
+            'baz' => false,
+        ];
+
+        $dataParams = new ParameterDataContainer();
+        $dataParams->setBodyParams($params);
+
+        $event = new MvcEvent();
+        $event->setRequest($request);
+        $event->setRouteMatch($matches);
+        $event->setParam('ZFContentNegotiationParameterData', $dataParams);
+
+        $this->assertNull($listener->onRoute($event));
+        $this->assertSame(
+            [
+                'str' => '',
+                'foo' => null,
+                'bar' => true,
+                'baz' => false,
+            ],
+            $dataParams->getBodyParams()
+        );
+    }
 }
