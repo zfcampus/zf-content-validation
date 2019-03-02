@@ -18,7 +18,7 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Removed
 
-- Nothing.
+- [#106](https://github.com/zfcampus/zf-content-validation/pull/106) removes support for zend-stdlib v2 releases.
 
 ### Fixed
 
