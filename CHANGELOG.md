@@ -22,7 +22,9 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Fixed
 
-- Nothing.
+- [#105](https://github.com/zfcampus/zf-content-validation/pull/105) fixes default behaviour when the configuration
+  flag `remove_empty_data` is not set. Data are not changed as described in the documentation.
+  It fixes BC Break introduced in version 1.7.0.
 
 ## 1.7.0 - 2019-02-26
 
