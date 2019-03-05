@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
+## 1.8.0 - 2019-03-05
+
+### Added
+
+- [#106](https://github.com/zfcampus/zf-content-validation/pull/106) adds support for PHP 7.3.
+
+### Changed
+
+- Nothing.
+
+### Deprecated
+
+- Nothing.
+
+### Removed
+
+- [#106](https://github.com/zfcampus/zf-content-validation/pull/106) removes support for zend-stdlib v2 releases.
+
+### Fixed
+
+- Nothing.
+
 ## 1.7.1 - 2019-03-05
 
 ### Added
