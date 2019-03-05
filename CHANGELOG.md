@@ -24,7 +24,7 @@ All notable changes to this project will be documented in this file, in reverse 
 
 - Nothing.
 
-## 1.7.1 - TBD
+## 1.7.1 - 2019-03-05
 
 ### Added
 
@@ -44,7 +44,9 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Fixed
 
-- Nothing.
+- [#105](https://github.com/zfcampus/zf-content-validation/pull/105) fixes default behaviour when the configuration flag `remove_empty_data`
+  is not set; in that scenario, data will not change as described in the
+  documentation. This fixes a BC break introduced in version 1.7.0.
 
 ## 1.7.0 - 2019-02-26
 
