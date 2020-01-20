@@ -3,7 +3,7 @@ ZF Content Validation
 
 > ## Repository abandoned 2019-12-31
 >
-> This repository has moved to laminas-api-tools/api-tools-content-validation.
+> This repository has moved to [laminas-api-tools/api-tools-content-validation](https://github.com/laminas-api-tools/api-tools-content-validation).
 
 [![Build Status](https://secure.travis-ci.org/zfcampus/zf-content-validation.svg?branch=master)](https://secure.travis-ci.org/zfcampus/zf-content-validation)
 [![Coverage Status](https://coveralls.io/repos/github/zfcampus/zf-content-validation/badge.svg?branch=master)](https://coveralls.io/github/zfcampus/zf-content-validation?branch=master)
